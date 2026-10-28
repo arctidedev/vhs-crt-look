@@ -194,7 +194,7 @@ def render(
         for j in range(1, 7):
             w = math.exp(-j / 2.5)
             ws += w
-            M = np.float32([[1, 0, j * T["smearLen"] / 6.0 * SW / 960.0], [0, 1, 0]])
+            M = np.array([[1, 0, j * T["smearLen"] / 6.0 * SW / 960.0], [0, 1, 0]], dtype=np.float32)
             sh = cv2.warpAffine(base, M, (SW, LINES), flags=cv2.INTER_LINEAR, borderMode=cv2.BORDER_REPLICATE)
             acc_s += w * np.maximum(sh - 0.35, 0)
         smear_t = acc_s / ws
@@ -244,7 +244,7 @@ def render(
             acc = np.zeros(X.shape + (3,), np.float32)
             cw = (2 * pqx) ** 2
             cvv = conv * cw * np.sign(pqy) * 4 * pqy * pqy if conv else None
-            cvh = conv * 1.5 / 960.0 * 2 * pqx * cw * SW if conv else None
+            cvh = conv * 1.5 / 960.0 * 2 * pqx * cw * SW if conv else None  # R and B land off near the corners
             for kk in range(-R + 1, R + 1):
                 n = n0 + kk
                 ok = (n >= 0) & (n < LINES)
@@ -254,13 +254,13 @@ def render(
                     continue
                 ny = np.clip(n, 0, LINES - 1).astype(np.float32)
                 v = _sample(linb, mx, ny)
-                if conv:
+                if cvh is not None:
                     v[..., 0] = _sample(linb[..., 0], mx + cvh, ny)
                     v[..., 2] = _sample(linb[..., 2], mx - cvh, ny)
                 sb = (bmin + (bmax - bmin) * np.power(np.maximum(v, 0), C["beam_pow"])) * foc[..., None]
                 s2 = sb * sb + scl * scl
                 d = (ly - (n + 0.5))[..., None]
-                if conv:
+                if cvv is not None:
                     d = d + np.stack([cvv, np.zeros_like(cvv), -cvv], -1)
                 w = (2.0 if field else 1.0) * ok
                 acc += (w[..., None] * v) * np.exp(-0.5 * d * d / s2) / (np.sqrt(s2) * 2.5066283)

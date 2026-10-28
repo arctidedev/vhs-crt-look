@@ -58,11 +58,12 @@ def pattern(w: int, h: int, t: float = 0.0) -> np.ndarray:
 
 def _pipe(cmd, frames_fn, n):
     p = subprocess.Popen(cmd, stdin=subprocess.PIPE, stderr=subprocess.PIPE)
+    assert p.stdin is not None and p.stderr is not None
     try:
         for i in range(n):
             p.stdin.write(frames_fn(i).tobytes())
         p.stdin.close()
-    except BrokenPipeError:
+    except OSError:  # BrokenPipeError on POSIX, EINVAL on Windows: ffmpeg stopped reading; its stderr says why
         pass
     err = p.stderr.read().decode(errors="replace")
     p.wait()
@@ -70,7 +71,9 @@ def _pipe(cmd, frames_fn, n):
 
 
 def write_video(path, frames_fn, n, w, h, fps="24", audio=True, extra=None, pix_fmt="yuv420p", codec=None, vfr=False):
-    ff = media.ffmpeg_bin()
+    ff = media.ff()
+    # the audio as long as the (variable-rate) video, so -shortest never cuts the picture
+    secs = n / pipeline.eval_fps(fps) if not vfr else (n // 2) / 24 + (n - n // 2) / 12
     raw = "rgba" if pix_fmt.startswith(("rgba", "yuva")) else "rgb24"
     cmd = [ff, "-v", "error", "-y", "-f", "rawvideo", "-pix_fmt", raw, "-s", f"{w}x{h}", "-r", fps, "-i", "-"]
     if audio:
@@ -78,7 +81,7 @@ def write_video(path, frames_fn, n, w, h, fps="24", audio=True, extra=None, pix_
             "-f",
             "lavfi",
             "-i",
-            f"sine=frequency=440:sample_rate=48000:duration={n / pipeline.eval_fps(fps) + 0.5:.3f}",
+            f"sine=frequency=440:sample_rate=48000:duration={secs + 0.5:.3f}",
         ]
     if vfr:  # variable frame rate: the first half at 24 fps, the second at 12 fps
         h2 = n // 2
@@ -139,7 +142,7 @@ class Runner:
         print(f"  SKIP  {name}  {why}", flush=True)
 
 
-def assert_img(path, w=None, h=None, channels=None, dtype=np.uint8):
+def assert_img(path, w=None, h=None, channels=None, dtype: Any = np.uint8):
     a = cv2.imdecode(np.fromfile(path, np.uint8), cv2.IMREAD_UNCHANGED)
     assert a is not None, f"unreadable {path}"
     if w is not None:
@@ -274,7 +277,7 @@ def run(out=None, quick=False, jobs=None) -> bool:
     def options():
         n = 0
         base = dict(look="my-own-funeral")
-        variants = [dict(mask=m) for m in presets.MASKS] + [dict(capture=c) for c in presets.CAPTURES]
+        variants: List[Dict[str, Any]] = [dict(mask=m) for m in presets.MASKS] + [dict(capture=c) for c in presets.CAPTURES]
         variants += [
             dict(curvature=1.0, fill=0.8),
             dict(fill=1.3),
@@ -294,7 +297,7 @@ def run(out=None, quick=False, jobs=None) -> bool:
         small = os.path.join(src, "small.png")
         media.write_image(small, pattern(240, 180))
         for v in variants:
-            kw = dict(base)
+            kw: Dict[str, Any] = dict(base)
             kw.update(v)
             cfg = presets.build(**kw)
             p, _ = pipeline.render_image(cfg, small, os.path.join(io, "opt", f"v{n:03d}.png"), quality="draft")
@@ -389,7 +392,7 @@ def run(out=None, quick=False, jobs=None) -> bool:
             if not rot_ok:
                 r = subprocess.run(
                     [
-                        media.ffmpeg_bin(),
+                        media.ff(),
                         "-v",
                         "error",
                         "-y",
@@ -498,7 +501,7 @@ def run(out=None, quick=False, jobs=None) -> bool:
             )
             r0 = subprocess.run(
                 [
-                    media.ffmpeg_bin(),
+                    media.ff(),
                     "-v",
                     "error",
                     "-y",
@@ -644,7 +647,7 @@ def run(out=None, quick=False, jobs=None) -> bool:
         "python": platform.python_version(),
         "numpy": np.__version__,
         "opencv": cv2.__version__,
-        "ffmpeg": subprocess.run([media.ffmpeg_bin(), "-version"], capture_output=True, text=True).stdout.splitlines()[
+        "ffmpeg": subprocess.run([media.ff(), "-version"], capture_output=True, text=True).stdout.splitlines()[
             0
         ]
         if have_ff
@@ -653,8 +656,8 @@ def run(out=None, quick=False, jobs=None) -> bool:
         "out": out,
         "results": R.rows,
     }
-    with open(os.path.join(out, "selftest_report.json"), "w", encoding="utf-8") as f:
-        json.dump(report, f, indent=1)
+    with open(os.path.join(out, "selftest_report.json"), "w", encoding="utf-8") as fh:
+        json.dump(report, fh, indent=1)
     n_ok = sum(1 for r in R.rows if r["ok"])
     n_fail = sum(1 for r in R.rows if r["ok"] is False)
     n_skip = sum(1 for r in R.rows if r["ok"] is None)

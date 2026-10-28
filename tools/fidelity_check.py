@@ -31,8 +31,8 @@ def main():
     sys.path.insert(0, os.path.join(a.proj, "looktest"))
     sys.path.insert(0, os.path.join(a.proj, "comp"))
     import cv2
-    import looktest as lt
-    import prep_tape as ptp  # the film's stamp placement and V2 preset (module-level code reads look.json only)
+    import looktest as lt  # pyright: ignore[reportMissingImports]
+    import prep_tape as ptp  # pyright: ignore[reportMissingImports] # the film's stamp placement and V2 preset (module-level code reads look.json only)
 
     video = a.video or os.path.join(a.proj, "comp", "in", "tape.mp4")
     idx = [int(x) for x in a.frames.split(",")]

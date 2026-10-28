@@ -80,7 +80,7 @@ def shift_rows(a: np.ndarray, dx: np.ndarray) -> np.ndarray:
 
 
 def frac_shift(a: np.ndarray, d: float) -> np.ndarray:
-    M = np.float32([[1, 0, d], [0, 1, 0]])
+    M = np.array([[1, 0, d], [0, 1, 0]], dtype=np.float32)
     return cv2.warpAffine(
         a,
         M,

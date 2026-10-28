@@ -20,3 +20,9 @@ ignore = ["E741", "E731", "E501", "B905", "UP006", "UP007", "UP031", "UP035", "U
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+
+[tool.pyright]
+pythonVersion = "3.9"
+extraPaths = ["vhs-crt-look/scripts"]
+venvPath = "."
+venv = ".venv"

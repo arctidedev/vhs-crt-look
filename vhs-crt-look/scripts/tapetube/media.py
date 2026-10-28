@@ -55,6 +55,16 @@ def ffprobe_bin() -> Optional[str]:
     return None
 
 
+def ff() -> str:
+    need_ffmpeg()
+    return ffmpeg_bin() or "ffmpeg"
+
+
+def fp() -> str:
+    need_ffmpeg()
+    return ffprobe_bin() or "ffprobe"
+
+
 def need_ffmpeg():
     if not ffmpeg_bin() or not ffprobe_bin():
         raise MediaError(
@@ -111,7 +121,10 @@ def _ffmpeg_decode_image(path: str) -> np.ndarray:
         r = subprocess.run([ff, "-v", "error", "-y", "-i", path, "-frames:v", "1", out], capture_output=True)
         if r.returncode or not os.path.exists(out):
             raise MediaError(f"cannot read image {path}: {r.stderr.decode(errors='replace').strip()[-300:]}")
-        return cv2.imdecode(np.fromfile(out, np.uint8), cv2.IMREAD_UNCHANGED)
+        img = cv2.imdecode(np.fromfile(out, np.uint8), cv2.IMREAD_UNCHANGED)
+        if img is None:
+            raise MediaError(f"cannot read image {path}")
+        return img
 
 
 def write_image(path: str, rgb: np.ndarray, alpha: Optional[np.ndarray] = None, bits: int = 8, quality: int = 95):
@@ -158,7 +171,7 @@ def probe(path: str) -> dict:
     need_ffmpeg()
     if not os.path.exists(path):
         raise MediaError(f"file not found: {path}")
-    j = _run_json([ffprobe_bin(), "-v", "error", "-show_streams", "-show_format", "-of", "json", path])
+    j = _run_json([fp(), "-v", "error", "-show_streams", "-show_format", "-of", "json", path])
     vs = [
         s
         for s in j.get("streams", [])
@@ -256,7 +269,7 @@ class VideoReader:
     def __init__(self, path, info, out_w, out_h, frame="native", start=None, duration=None, fps_str=None):
         need_ffmpeg()
         self.w, self.h = out_w, out_h
-        cmd = [ffmpeg_bin(), "-v", "error", "-nostdin"]
+        cmd = [ff(), "-v", "error", "-nostdin"]
         if start:
             cmd += ["-ss", f"{float(start):.6f}"]
         if duration:
@@ -272,13 +285,15 @@ class VideoReader:
         cmd += ["-f", "rawvideo", "-pix_fmt", "rgb24", "-"]
         self.err = tempfile.TemporaryFile()  # a file, not a pipe: a chatty ffmpeg can never block on stderr
         self.proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=self.err, bufsize=out_w * out_h * 3 * 2)
+        assert self.proc.stdout is not None
+        self.out = self.proc.stdout
 
     def __iter__(self) -> Iterator[np.ndarray]:
         n = self.w * self.h * 3
         complete = False
         try:
             while True:
-                buf = self.proc.stdout.read(n)
+                buf = self.out.read(n)
                 if len(buf) < n:
                     complete = True
                     break
@@ -290,7 +305,7 @@ class VideoReader:
         """Stop ffmpeg (killed if the caller stopped reading early) and report a decode error if it failed."""
         if self.proc.poll() is None and not check:
             self.proc.kill()
-        self.proc.stdout.close()
+        self.out.close()
         self.proc.wait()
         self.err.seek(0)
         err = self.err.read().decode(errors="replace")
@@ -334,7 +349,7 @@ class VideoWriter:
         args = video_codec_args(codec, crf)
         vf = "scale=out_color_matrix=bt709:out_range=tv"
         cmd = [
-            ffmpeg_bin(),
+            ff(),
             "-v",
             "error",
             "-y",
@@ -354,14 +369,23 @@ class VideoWriter:
         cmd += [path]
         self.err = tempfile.TemporaryFile()
         self.proc = subprocess.Popen(cmd, stdin=subprocess.PIPE, stderr=self.err)
+        assert self.proc.stdin is not None
+        self.inp = self.proc.stdin
         self.n = 0
 
     def write(self, rgb_u8: np.ndarray):
-        self.proc.stdin.write(np.ascontiguousarray(rgb_u8).tobytes())
+        try:
+            self.inp.write(np.ascontiguousarray(rgb_u8).tobytes())
+        except OSError:  # ffmpeg stopped (BrokenPipeError on POSIX, EINVAL on Windows): report its own message
+            self.close()
+            raise MediaError("ffmpeg stopped accepting frames")
         self.n += 1
 
     def close(self):
-        self.proc.stdin.close()
+        try:
+            self.inp.close()
+        except OSError:
+            pass
         self.proc.wait()
         self.err.seek(0)
         err = self.err.read().decode(errors="replace")
@@ -393,7 +417,7 @@ def mux_audio(video_only: str, src: str, out: str, start=None, duration=None, mo
         trim += ["-ss", f"{float(start):.6f}"]
     if duration:
         trim += ["-t", f"{float(duration):.6f}"]
-    base = [ffmpeg_bin(), "-v", "error", "-y", "-i", video_only] + trim + ["-i", src, "-map", "0:v:0", "-map", "1:a:0?"]
+    base = [ff(), "-v", "error", "-y", "-i", video_only] + trim + ["-i", src, "-map", "0:v:0", "-map", "1:a:0?"]
     base += ["-c:v", "copy"]
     if length:
         base += ["-t", f"{float(length):.6f}"]

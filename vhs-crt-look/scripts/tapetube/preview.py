@@ -6,7 +6,7 @@ from __future__ import annotations
 import os
 import subprocess
 from concurrent.futures import ProcessPoolExecutor
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional, TypedDict
 
 import cv2
 import numpy as np
@@ -14,11 +14,24 @@ import numpy as np
 from . import media, osd, pipeline, presets, vhs
 
 BG = np.array([0.055, 0.055, 0.052], np.float32)
+
+
+class Still(TypedDict):
+    """One source moment: the frame and the three before it (the camcorder's tube lag), already framed."""
+
+    hist: List[np.ndarray]
+    alpha: Optional[np.ndarray]
+    w: int
+    h: int
+    kind: str
+    t: float
+    fps: float
+    index: int
 DIM = np.array([0.62, 0.62, 0.59], np.float32)
 
 
 # ------------------------------------------------------------------------------------------------ sources
-def load_still(path: str, frame: str, t: Optional[float] = None, max_h: int = 1440):
+def load_still(path: str, frame: str, t: Optional[float] = None, max_h: int = 1440) -> Still:
     """The source still (framed for the tape) and the history the camcorder needs, as float RGB.
     Returns dict(hist=[frame t, t-1, t-2, t-3], alpha, w, h, kind, t, fps)."""
     k = media.kind(path)
@@ -34,7 +47,7 @@ def load_still(path: str, frame: str, t: Optional[float] = None, max_h: int = 14
             nw = int(round(w * max_h / h))
             rgb = cv2.resize(rgb, (nw, max_h), interpolation=cv2.INTER_AREA)
             alpha = None if alpha is None else cv2.resize(alpha, (nw, max_h), interpolation=cv2.INTER_AREA)
-        return dict(hist=[rgb] * 4, alpha=alpha, w=rgb.shape[1], h=rgb.shape[0], kind="image", t=0.0, fps=24.0, index=0)
+        return Still(hist=[rgb] * 4, alpha=alpha, w=rgb.shape[1], h=rgb.shape[0], kind="image", t=0.0, fps=24.0, index=0)
     info = media.probe(path)
     fw, fh = (
         (info["width"], info["height"])
@@ -48,7 +61,7 @@ def load_still(path: str, frame: str, t: Optional[float] = None, max_h: int = 14
         t = (info.get("duration") or 0) * 0.4
     frames = media.extract_frames(path, info, t, 4, fw, fh, frame)
     hist = [pipeline.as_float(f) for f in frames[::-1]]
-    return dict(
+    return Still(
         hist=hist, alpha=None, w=fw, h=fh, kind="video", t=t, fps=info["fps"], index=int(round(t * info["fps"]))
     )
 
@@ -58,7 +71,7 @@ def preview_size(src_w: int, src_h: int, height: Optional[int], default_h: int =
     return pipeline.output_size(src_w, src_h, "native", height=h)
 
 
-def render_still(cfg: dict, still: dict, w: int, h: int, quality="final", layer=6, snaps=None, reflection=None):
+def render_still(cfg: dict, still: Still, w: int, h: int, quality="final", layer=6, snaps=None, reflection=None):
     R = pipeline.Renderer(cfg, w, h, still["fps"], quality, reflection)
     i = still["index"]
     if snaps is None and layer >= 6:
@@ -68,7 +81,7 @@ def render_still(cfg: dict, still: dict, w: int, h: int, quality="final", layer=
     return R.show(sig, i, layer=layer)[0]
 
 
-def src_at(still: dict, w: int, h: int) -> np.ndarray:
+def src_at(still: Still, w: int, h: int) -> np.ndarray:
     return np.clip(pipeline.resize_to(still["hist"][0], w, h), 0, 1)
 
 
@@ -120,7 +133,7 @@ def save(path: str, rgb: np.ndarray) -> str:
 
 # ------------------------------------------------------------------------------------------------ compare
 def compare(
-    cfg: dict, still: dict, out_dir: str, height=None, quality="final", reflection=None, look_rgb=None
+    cfg: dict, still: Still, out_dir: str, height=None, quality="final", reflection=None, look_rgb=None
 ) -> Dict[str, str]:
     """split.png (original left, the look right), side_by_side.png, zoom.png (centre crops at 2x pixels)."""
     os.makedirs(out_dir, exist_ok=True)
@@ -238,7 +251,7 @@ def stage_names(cfg: dict, keys) -> Dict[str, tuple]:
     return out
 
 
-def ladder(cfg: dict, still: dict, out_dir: str, height=None, quality="final", reflection=None) -> Dict[str, str]:
+def ladder(cfg: dict, still: Still, out_dir: str, height=None, quality="final", reflection=None) -> Dict[str, Any]:
     """Every stage added cumulatively: S0..S5 (the tape, captured direct) and, for a tube look, L0..L6 (the tube,
     layer by layer) plus a macro of the phosphor mask. Writes each stage and ladder_tape.png / ladder_tube.png."""
     os.makedirs(out_dir, exist_ok=True)
@@ -247,7 +260,7 @@ def ladder(cfg: dict, still: dict, out_dir: str, height=None, quality="final", r
     snaps: dict = {}
     sig = R.signal(still["hist"], still["index"], snaps=snaps)
     labels = tape_labels(cfg, sig.shape[1])
-    out: Dict[str, str] = {}
+    out: Dict[str, Any] = {}
     imgs = {"S0": src_at(still, w, h)}
     for k in ("S1", "S2", "S3", "S4", "S5"):
         x = np.clip(snaps[k], 0, 1)
@@ -311,11 +324,11 @@ def ladder(cfg: dict, still: dict, out_dir: str, height=None, quality="final", r
     return out
 
 
-def macro_view(cfg: dict, sig: np.ndarray, still: dict, w: int, h: int, zoom: float = 6.0) -> np.ndarray:
+def macro_view(cfg: dict, sig: np.ndarray, still: Still, w: int, h: int, zoom: float = 6.0) -> np.ndarray:
     """The tube's face up close (the screen at `zoom` times the frame), where the mask resolves."""
     c2 = dict(cfg)
     c2["tube"] = dict(cfg["tube"], fill=zoom)
-    R = pipeline.Renderer(c2, w, h, still["fps"], 2)
+    R = pipeline.Renderer(c2, w, h, still["fps"], "high")
     rgb = R.show(sig, still["index"], layer=5, capture="screen")[0]
     return rgb
 
@@ -338,7 +351,7 @@ def _sheet_job(args):
 
 
 def sheet(
-    still: dict,
+    still: Still,
     out_dir: str,
     looks: Optional[List[str]] = None,
     look_kw: Optional[dict] = None,
@@ -414,7 +427,7 @@ def clip(
         w, h = res["size"]
         fps = res["fps"]
         cmd = [
-            media.ffmpeg_bin(),
+            media.ff(),
             "-v",
             "error",
             "-y",
