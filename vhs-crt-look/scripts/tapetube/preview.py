@@ -27,6 +27,8 @@ class Still(TypedDict):
     t: float
     fps: float
     index: int
+
+
 DIM = np.array([0.62, 0.62, 0.59], np.float32)
 
 
@@ -47,7 +49,9 @@ def load_still(path: str, frame: str, t: Optional[float] = None, max_h: int = 14
             nw = int(round(w * max_h / h))
             rgb = cv2.resize(rgb, (nw, max_h), interpolation=cv2.INTER_AREA)
             alpha = None if alpha is None else cv2.resize(alpha, (nw, max_h), interpolation=cv2.INTER_AREA)
-        return Still(hist=[rgb] * 4, alpha=alpha, w=rgb.shape[1], h=rgb.shape[0], kind="image", t=0.0, fps=24.0, index=0)
+        return Still(
+            hist=[rgb] * 4, alpha=alpha, w=rgb.shape[1], h=rgb.shape[0], kind="image", t=0.0, fps=24.0, index=0
+        )
     info = media.probe(path)
     fw, fh = (
         (info["width"], info["height"])
