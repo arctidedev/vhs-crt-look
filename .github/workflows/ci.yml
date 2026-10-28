@@ -1,0 +1,48 @@
+name: CI
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  test:
+    name: ${{ matrix.os }} / Python ${{ matrix.python }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            python: "3.9"
+          - os: ubuntu-latest
+            python: "3.13"
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: ${{ matrix.python }}
+      - name: Install ffmpeg
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends ffmpeg
+      - name: Install the skill's requirements into a clean environment
+        run: python -m pip install -r vhs-crt-look/requirements.txt pytest
+      - name: Doctor
+        run: python vhs-crt-look/scripts/vhslook.py doctor
+      - name: Unit tests
+        run: python -m pytest -q
+      - name: Install the skill the way a user would (fresh home, its own environment)
+        run: |
+          HOME="$RUNNER_TEMP/home" bash vhs-crt-look/install.sh --yes
+          SKILL="$RUNNER_TEMP/home/.claude/skills/vhs-crt-look"
+          test -x "$SKILL/.venv/bin/python"
+          python -c "import numpy, cv2; a = numpy.zeros((90, 160, 3), numpy.uint8); a[:] = (40, 90, 160); cv2.imwrite('in.png', a)"
+          python "$SKILL/scripts/vhslook.py" render in.png out.png
+          test -s out.png
+      - name: Self-test (synthetic media through every look and output type)
+        run: python vhs-crt-look/scripts/vhslook.py selftest --out selftest-out
+      - name: Keep the self-test report
+        if: always()
+        uses: actions/upload-artifact@v5
+        with:
+          name: selftest-${{ matrix.os }}-py${{ matrix.python }}
+          path: selftest-out/selftest_report.json

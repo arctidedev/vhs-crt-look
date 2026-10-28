@@ -1,0 +1,28 @@
+[project]
+name = "vhs-crt-look"
+version = "1.0.0"
+description = "Claude Code skill: the 1987 camcorder, VHS tape and CRT TV look for any image or video"
+readme = "README.md"
+license = { text = "MIT" }
+requires-python = ">=3.9"
+dependencies = ["numpy>=1.20", "opencv-python-headless>=4.5"]
+
+[dependency-groups]
+dev = ["pytest>=7", "ruff>=0.5"]
+
+[tool.ruff]
+line-length = 120
+target-version = "py39"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "UP", "B"]
+ignore = ["E741", "E731", "E501", "B905", "UP006", "UP007", "UP031", "UP035", "UP036", "UP045"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.pyright]
+pythonVersion = "3.9"
+extraPaths = ["vhs-crt-look/scripts"]
+venvPath = "."
+venv = ".venv"
