@@ -10,7 +10,7 @@ import zipfile
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SKILL = os.path.join(ROOT, "vhs-crt-look")
-SKIP_DIRS = {"__pycache__", "vhslook_preview"}
+SKIP_DIRS = {"__pycache__", "vhslook_preview", ".ruff_cache", ".pytest_cache"}
 
 
 def main():

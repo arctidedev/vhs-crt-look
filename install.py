@@ -17,7 +17,7 @@ import sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 SKILL = os.path.join(HERE, "vhs-crt-look")
-IGNORE = shutil.ignore_patterns("__pycache__", "*.pyc", ".DS_Store", "vhslook_preview")
+IGNORE = shutil.ignore_patterns("__pycache__", "*.pyc", ".DS_Store", "vhslook_preview", ".ruff_cache", ".pytest_cache")
 
 
 def main():

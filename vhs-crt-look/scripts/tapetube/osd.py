@@ -116,7 +116,7 @@ def stamp_layout(cw_px: int, ch_px: int, text: str, pos: str = "br", cell: Optio
     text fits between equal side margins."""
     s = ch_px / 480.0
     cell = cell or max(1, int(round(6 * ch_px / 720.0)))
-    mr, mb = DATE_MARGIN_RIGHT * s, DATE_MARGIN_BOTTOM * s
+    mr, mb = DATE_MARGIN_RIGHT * cw_px / 640.0, DATE_MARGIN_BOTTOM * s  # side margin follows the width (portrait)
     while cell > 1 and text_width(text, cell) + 2 * mr > cw_px:
         cell -= 1
     if text_width(text, cell) + 2 * mr > cw_px:
