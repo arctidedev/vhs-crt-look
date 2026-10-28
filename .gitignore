@@ -42,3 +42,9 @@ npm-debug.log*
 coverage/
 htmlcov/
 .nyc_output/
+
+# vhs-crt-look outputs
+vhslook_preview/
+selftest-out/
+dist/
+.deslint/
