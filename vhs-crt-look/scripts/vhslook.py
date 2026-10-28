@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
-"""vhslook: the 1987 camcorder -> VHS tape -> CRT TV look from "My Own Funeral", for any image or video.
+"""vhslook: a 1987 camcorder -> VHS tape -> CRT TV look for any image or video.
 
+  python vhslook.py setup                               one-time setup (own environment, numpy, OpenCV, ffmpeg)
   python vhslook.py doctor                              check Python, numpy, OpenCV, ffmpeg
   python vhslook.py looks                               list the named looks
   python vhslook.py info IN                             what the input is (size, fps, VFR, audio, alpha)
@@ -32,22 +33,49 @@ sys.path.insert(0, HERE)
 if sys.version_info < (3, 9):
     sys.exit("vhslook needs Python 3.9 or newer (this is %d.%d)." % sys.version_info[:2])
 
+SKILL_DIR = os.path.dirname(HERE)
+SKILL_VENV = os.path.join(SKILL_DIR, ".venv")
+SKILL_PY = (
+    os.path.join(SKILL_VENV, "Scripts", "python.exe") if os.name == "nt" else os.path.join(SKILL_VENV, "bin", "python")
+)
+
+
+def _use_skill_env():
+    """Run inside the skill's own environment (made by setup) whichever python started this script."""
+    if os.environ.get("VHSLOOK_IN_VENV") or os.environ.get("VHSLOOK_NO_VENV") or not os.path.exists(SKILL_PY):
+        return
+    if os.path.normcase(os.path.realpath(sys.prefix)) == os.path.normcase(os.path.realpath(SKILL_VENV)):
+        return
+    env = dict(os.environ, VHSLOOK_IN_VENV="1")
+    args = [SKILL_PY, os.path.abspath(__file__)] + sys.argv[1:]
+    if os.name == "nt":  # os.execv on Windows returns to the shell before the child finishes
+        import subprocess
+
+        sys.exit(subprocess.call(args, env=env))
+    os.execve(SKILL_PY, args, env)
+
+
+if len(sys.argv) > 1 and sys.argv[1] == "setup":
+    from setup_env import main as _setup
+
+    sys.exit(_setup(sys.argv[2:]))
+_use_skill_env()
+
 try:
     import cv2  # noqa: F401
     import numpy  # noqa: F401
-except ImportError as e:  # pragma: no cover
-    missing = "opencv-python-headless" if "cv2" in str(e) else "numpy"
+except ImportError:  # pragma: no cover
     sys.exit(
-        f"Missing Python package: {missing}.\n"
-        f"Install both with:  {os.path.basename(sys.executable)} -m pip install numpy opencv-python-headless\n"
-        "(or: pip install -r requirements.txt from the skill folder). Then run: python vhslook.py doctor"
+        "vhs-crt-look is not set up yet (numpy and OpenCV are missing).\n"
+        f'Run once:  {os.path.basename(sys.executable)} "{os.path.abspath(__file__)}" setup\n'
+        "It makes the skill's own Python environment and installs them there; nothing system-wide changes."
     )
 
 from tapetube import media, pipeline, presets  # noqa: E402
 
 
 # ------------------------------------------------------------------------------------------------ options
-def look_args(p: argparse.ArgumentParser, default_look="my-own-funeral"):
+def look_args(p: argparse.ArgumentParser, default_look="vhs-on-tv"):
     g = p.add_argument_group("look")
     g.add_argument("--look", default=default_look, help="named look (see: vhslook.py looks)")
     g.add_argument("--tape", help="tape preset V1..V7 (overrides the look's)")
@@ -83,7 +111,7 @@ def look_args(p: argparse.ArgumentParser, default_look="my-own-funeral"):
         metavar="KEY=VALUE",
         help="set any raw parameter, e.g. vhs.luma_tvl=[200,180]",
     )
-    g.add_argument("--seed", type=int, default=0, help="noise seed (0 = the film's own noise); same seed, same output")
+    g.add_argument("--seed", type=int, default=0, help="noise seed (0 = the reference noise); same seed, same output")
     g.add_argument(
         "--frame", choices=presets.FRAMES, default="native", help="native aspect (default), crop to 4:3, or pad to 4:3"
     )
@@ -488,6 +516,12 @@ def main(argv=None):
     sub = ap.add_subparsers(dest="cmd")
     sub.required = True
 
+    p = sub.add_parser(
+        "setup", help="one-time setup: own environment, numpy, OpenCV, ffmpeg (run before anything else)"
+    )
+    p.add_argument("--yes", "-y", action="store_true", help="install ffmpeg without asking if it is missing")
+    p.add_argument("--no-ffmpeg", action="store_true", help="skip the ffmpeg step (stills only)")
+    p.add_argument("--force", action="store_true", help="rebuild the environment")
     p = sub.add_parser("doctor", help="check the environment")
     p.set_defaults(fn=cmd_doctor)
     p = sub.add_parser("looks", help="list looks, presets, strengths and stages")

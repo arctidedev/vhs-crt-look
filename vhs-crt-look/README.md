@@ -1,31 +1,32 @@
 # vhs-crt-look
 
-The 1987 camcorder, VHS tape and CRT TV look from the short film **My Own Funeral**, as a free skill for Claude (and a plain command-line tool) that anyone can run on their own images and videos.
+A 1987 camcorder, VHS tape and CRT TV look as a free skill for Claude (and a plain command-line tool) that anyone can run on their own images and videos.
 
 It is a signal model, not a filter: the picture goes through a consumer camcorder, an SP recording, a playback deck, optionally a dub, and then a CRT built per pixel (beam lines, phosphor mask, glow, glass) and the camera that filmed it. Every stage can be switched off or turned up or down, and every choice is previewed on your own media before the final render.
 
-## What you need
+## Install (about two minutes)
 
-- Python 3.9 or newer
-- `numpy` and `opencv-python-headless` (`python -m pip install -r requirements.txt`)
-- `ffmpeg` (with `ffprobe`) for video: macOS `brew install ffmpeg`, Windows `winget install Gyan.FFmpeg`, Debian/Ubuntu `sudo apt install ffmpeg`, conda `conda install -c conda-forge ffmpeg`. Stills work without it.
+1. Unzip `vhs-crt-look-skill.zip`.
+2. Double-click the installer in the unzipped folder:
+   - **Mac:** `INSTALL-mac.command`. The first time, macOS may block a downloaded file: right-click it, choose **Open**, then **Open** again.
+   - **Windows:** `INSTALL-windows.bat`. If Windows shows "Windows protected your PC", click **More info**, then **Run anyway**.
+   - **Linux:** open a terminal in the folder and run `bash install.sh`.
+3. When it says **All set**, restart Claude Code and ask, for example: *"Make ~/Movies/birthday.mp4 look like an old VHS home video."*
 
-No GPU, browser or internet connection is needed. Works on macOS, Windows and Linux.
+The installer copies the skill into Claude Code (`~/.claude/skills/vhs-crt-look`), gives it its own Python packages (numpy and OpenCV, about 60 MB, nothing installed system-wide), and checks for ffmpeg, which video needs. If ffmpeg is missing it shows the one command that installs it and asks before running it. If Python is missing it says how to get it (on Windows it offers to install it).
 
-## Install as a Claude skill
+**Even simpler:** in Claude Code, say *"Install the skill in ~/Downloads/vhs-crt-look-skill.zip"* and let Claude do the steps above.
 
-**Claude Code:** copy this folder (`vhs-crt-look`, the one holding `SKILL.md`) into your skills folder:
+Claude then does the rest each time: it renders every look on your own photo or clip, shows you a contact sheet and a before/after page, asks which look and how strong, refines the previews with you, and only then renders the final file.
 
-- all projects: `~/.claude/skills/vhs-crt-look` (Windows: `%USERPROFILE%\.claude\skills\vhs-crt-look`)
-- one project: `<project>/.claude/skills/vhs-crt-look`
+**Requirements, for reference:** Python 3.9 or newer, numpy, opencv-python-headless, and ffmpeg (with ffprobe) for video. No GPU, browser or internet connection is needed after setup. macOS, Windows and Linux.
 
-or run `python install.py` from the repository root. Then ask Claude something like "make this clip look like a 1987 camcorder tape filmed off a TV" and point it at your file. Claude checks the setup, renders a contact sheet of every look on your footage plus a before/after page, asks what you want, iterates on previews and only then renders.
-
-**Other Claude apps that accept custom skills:** upload a zip of this folder (`python tools/package_skill.py` in the repository builds `dist/vhs-crt-look-skill.zip`). Video needs an environment where ffmpeg is available.
+**Other Claude apps that accept custom skills:** upload the zip. Video there needs an environment with ffmpeg.
 
 ## Use it without Claude
 
 ```
+python scripts/vhslook.py setup                           # one time: own environment, numpy, OpenCV, ffmpeg
 python scripts/vhslook.py doctor                          # check the setup
 python scripts/vhslook.py preview clip.mp4 --open         # sheet + compare + ladder + clip + page
 python scripts/vhslook.py render clip.mp4 out.mp4 --look church-dub -s noise=0.6 --date "JUL 4 1989"
@@ -47,4 +48,4 @@ python scripts/vhslook.py selftest --quick                # synthetic media thro
 
 ## Credits and licence
 
-Look and models by Raul Brito for **My Own Funeral** (GenHQ Weekly Challenge: Give Your Character a Voice, 2026). Released under the MIT licence (see `LICENSE`): use it, change it, ship it.
+By Raul Brito. Released under the MIT licence (see `LICENSE`): use it, change it, ship it.

@@ -1,8 +1,8 @@
 """Small signal-processing helpers on numpy + OpenCV only.
 
 gauss1d / gauss2d reproduce scipy.ndimage.gaussian_filter1d / gaussian_filter (mode 'reflect', truncate 4.0):
-same kernel radius, same weights, same border rule (scipy 'reflect' is OpenCV BORDER_REFLECT). The look test
-that the film used was written against SciPy; this keeps the port numerically faithful without that dependency.
+same kernel radius, same weights, same border rule (scipy 'reflect' is OpenCV BORDER_REFLECT). The reference
+look test was written against SciPy; this keeps the port numerically faithful without that dependency.
 """
 
 from __future__ import annotations

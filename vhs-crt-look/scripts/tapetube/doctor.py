@@ -31,7 +31,7 @@ def run() -> bool:
         ["Install Python 3.9 or newer from python.org (or your package manager)."],
     )
     ok_all &= py_ok
-    pip = f"{os.path.basename(sys.executable)} -m pip install numpy opencv-python-headless"
+    pip = f'{os.path.basename(sys.executable)} "{os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "vhslook.py")}" setup'
     try:
         import numpy as np
 
@@ -55,14 +55,18 @@ def run() -> bool:
     from . import media
 
     ff, fp = media.ffmpeg_bin(), media.ffprobe_bin()
-    fix = {
-        "Darwin": ["brew install ffmpeg"],
-        "Windows": ["winget install Gyan.FFmpeg   (then open a new terminal)", "or: choco install ffmpeg"],
-        "Linux": ["sudo apt install ffmpeg   (Debian/Ubuntu)", "sudo dnf install ffmpeg   (Fedora, RPM Fusion)"],
-    }.get(platform.system(), ["install ffmpeg from ffmpeg.org"]) + [
-        "conda: conda install -c conda-forge ffmpeg",
-        "or set VHSLOOK_FFMPEG and VHSLOOK_FFPROBE to the binaries",
-    ]
+    fix = (
+        ["easiest: run setup (it offers to install ffmpeg):  " + pip]
+        + {
+            "Darwin": ["brew install ffmpeg"],
+            "Windows": ["winget install Gyan.FFmpeg   (then open a new terminal)", "or: choco install ffmpeg"],
+            "Linux": ["sudo apt install ffmpeg   (Debian/Ubuntu)", "sudo dnf install ffmpeg   (Fedora, RPM Fusion)"],
+        }.get(platform.system(), ["install ffmpeg from ffmpeg.org"])
+        + [
+            "conda: conda install -c conda-forge ffmpeg",
+            "or set VHSLOOK_FFMPEG and VHSLOOK_FFPROBE to the binaries",
+        ]
+    )
     if ff:
         try:
             v = subprocess.run([ff, "-version"], capture_output=True, text=True).stdout.splitlines()[0]

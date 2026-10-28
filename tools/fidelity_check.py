@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
-"""Fidelity check: the skill's VHS chain against the film's own looktest.py, on the same input frames.
+"""Fidelity check: the skill's VHS chain against the reference looktest.py, on the same input frames.
 
   python3 tools/fidelity_check.py <film project dir> [--video PATH] [--frames 96,97,120] [--preset V2]
 
-Needs the film's project (looktest/, scripts/vhs_crt.py, comp/prep_tape.py) and SciPy; imports them read-only
-(no bytecode written there). Feeds both chains the identical camcorder-raster frames (the film's own 4:3 crop and
+Needs the reference project (looktest/, scripts/vhs_crt.py, comp/prep_tape.py) and SciPy; imports them read-only
+(no bytecode written there). Feeds both chains the identical camcorder-raster frames (the reference 4:3 crop and
 cubic resize) with seed 0 and reports the max absolute difference per stage, in video level (0..1).
 """
 
@@ -32,7 +32,7 @@ def main():
     sys.path.insert(0, os.path.join(a.proj, "comp"))
     import cv2
     import looktest as lt  # pyright: ignore[reportMissingImports]
-    import prep_tape as ptp  # pyright: ignore[reportMissingImports] # the film's stamp placement and V2 preset (module-level code reads look.json only)
+    import prep_tape as ptp  # pyright: ignore[reportMissingImports] # the reference stamp placement and V2 preset (module-level code reads look.json only)
 
     video = a.video or os.path.join(a.proj, "comp", "in", "tape.mp4")
     idx = [int(x) for x in a.frames.split(",")]

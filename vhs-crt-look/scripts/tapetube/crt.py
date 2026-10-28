@@ -1,8 +1,8 @@
-"""The CRT of "My Own Funeral" in numpy: a port of the film's three.js tube (comp/index_bd2.html, face and glass
-shaders and the camera passes) with the look test's band-limited phosphor masks (looktest.py phosphor_mask).
+"""The CRT in numpy: a port of the reference three.js tube (face and glass shaders and the camera passes) with
+the reference look test's band-limited phosphor masks.
 No GPU, no browser: every output pixel is computed in linear light, never an overlay.
 
-Layers (cumulative, as in the breakdown):
+Layers (cumulative):
   L0 the signal on the raster, through the tube's drive (gamma)
   L1 480 Gaussian beam lines, each line's width grows with that gun's current; white smear to the right
   L2 the phosphor mask (slot, aperture grille with damper wires, or dot triads), band-limited by the camera's PSF so
@@ -15,7 +15,7 @@ Layers (cumulative, as in the breakdown):
 
 Geometry: the camera looks straight at the tube; `fill` sets how much of the frame the raster spans and
 `curvature` bends a flat 2005 face (0) toward a curved older set (1). Overscan (7 %), the residual pincushion, the
-rounded raster corners with soft edges and the beam defocus toward the corners come from the film.
+rounded raster corners with soft edges and the beam defocus toward the corners follow the reference tube.
 """
 
 from __future__ import annotations
@@ -335,7 +335,7 @@ def render(
 
 def lens_bloom(lin: np.ndarray, CAM: dict) -> np.ndarray:
     """The filming camera's lens bloom and glare: a bright pass above a luminance knee, spread at six scales (bloom)
-    and three very wide ones (glare). Scales follow the output width (the film: 1440 px)."""
+    and three very wide ones (glare). Scales follow the output width (tuned at 1440 px)."""
     h, w = lin.shape[:2]
     k0, k1 = CAM.get("bloomKnee", [0.12, 0.5])
     hw, hh = max(1, w // 2), max(1, h // 2)
@@ -356,7 +356,7 @@ def lens_bloom(lin: np.ndarray, CAM: dict) -> np.ndarray:
 
 
 def add_grain(rgb: np.ndarray, CAM: dict, rng) -> np.ndarray:
-    """The film's camera-side grain: uniform per-frame noise on 8-bit luma (+/- grainLuma / 2 levels) and chroma
+    """Camera-side grain: uniform per-frame noise on 8-bit luma (+/- grainLuma / 2 levels) and chroma
     (+/- grainChroma / 2), as ffmpeg's noise filter applied it (c0s=7, c1s=c2s=2, temporal, uniform)."""
     h, w = rgb.shape[:2]
     gy = CAM.get("grainLuma", 0) / 255.0

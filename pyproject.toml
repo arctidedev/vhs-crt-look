@@ -1,7 +1,7 @@
 [project]
 name = "vhs-crt-look"
 version = "1.0.0"
-description = "Claude Code skill: the 1987 camcorder, VHS tape and CRT TV look from My Own Funeral, for any image or video"
+description = "Claude Code skill: the 1987 camcorder, VHS tape and CRT TV look for any image or video"
 readme = "README.md"
 license = { text = "MIT" }
 requires-python = ">=3.9"

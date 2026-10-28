@@ -5,7 +5,7 @@ Canonical instructions for any agent (Codex, Claude Code, others) working in thi
 ## Repository Expectations
 
 - Project: `vhs-crt-look`
-- Description: Free Claude Code skill: the 1987 camcorder, VHS tape and CRT TV look from My Own Funeral, for any image or video
+- Description: Free Claude Code skill: the 1987 camcorder, VHS tape and CRT TV look for any image or video
 - Stack: Python CLI Tool
 
 ## Commands
@@ -13,16 +13,16 @@ Canonical instructions for any agent (Codex, Claude Code, others) working in thi
 - Run: `python vhs-crt-look/scripts/vhslook.py <command>` (doctor, looks, info, preview, render, compare, ladder, sheet, clip, page, rewind, params, selftest)
 - Test: `python -m pytest -q` and `python vhs-crt-look/scripts/vhslook.py selftest --quick`
 - Lint: `ruff check .`
-- Fidelity against the film: `python3 tools/fidelity_check.py <film project dir>` (needs SciPy and the film project, read-only)
+- Fidelity against the reference: `python3 tools/fidelity_check.py <reference project dir>` (needs SciPy and that project, read-only)
 - Package: `python tools/package_skill.py` (dist/vhs-crt-look-skill.zip); install: `python install.py`
 
 ## Engineering Conventions
 
 - The skill package is `vhs-crt-look/`; it must stay self-contained and portable: Python 3.9+, numpy and opencv-python-headless only (no SciPy, no PIL), ffmpeg/ffprobe through subprocess for video. Paths via os.path, binary pipes, `if __name__ == "__main__"` guards (Windows spawns worker processes).
-- The tape chain (`tapetube/vhs.py`) is a line-for-line port of the film's `looktest.py`; keep it numerically faithful (run the fidelity check after touching it). Parameter names match the film's (`presets/looks.json`).
+- The tape chain (`tapetube/vhs.py`) is a line-for-line port of the reference `looktest.py`; keep it numerically faithful (run the fidelity check after touching it). Parameter names match the reference (`presets/looks.json`).
 - Deterministic: per-frame random streams from (seed, frame index), never from worker order.
 - Video streams frame by frame; never hold a whole clip in memory.
-- Copy (SKILL.md, README, labels, page): neutral technical wording, no em dashes.
+- Copy (SKILL.md, README, labels, page): neutral technical wording, no em dashes, no film or contest names.
 
 ## Instrumentation
 

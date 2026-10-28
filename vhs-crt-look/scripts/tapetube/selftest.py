@@ -270,7 +270,7 @@ def run(out=None, quick=False, jobs=None, only=None) -> bool:
 
     def odd_case():
         p, s = pipeline.render_image(
-            presets.build(look="my-own-funeral"), odd, os.path.join(io, "odd_portrait.png"), quality=q
+            presets.build(look="vhs-on-tv"), odd, os.path.join(io, "odd_portrait.png"), quality=q
         )
         assert_img(p, 333, 601, 3)
         p2, _ = pipeline.render_image(
@@ -300,9 +300,7 @@ def run(out=None, quick=False, jobs=None, only=None) -> bool:
             presets.build(look="home-camcorder"), wide, os.path.join(io, "wide_out.png"), quality=q
         )
         assert_img(p, 900, 260, 3)
-        p, _ = pipeline.render_image(
-            presets.build(look="my-own-funeral"), tiny, os.path.join(io, "tiny_out.jpg"), quality=q
-        )
+        p, _ = pipeline.render_image(presets.build(look="vhs-on-tv"), tiny, os.path.join(io, "tiny_out.jpg"), quality=q)
         assert_img(p, 64, 48, 3)
         p, _ = pipeline.render_image(
             presets.build(look="consumer-tv"), img, os.path.join(io, "resized.png"), height=360, quality=q
@@ -313,11 +311,11 @@ def run(out=None, quick=False, jobs=None, only=None) -> bool:
     R.check("image 16-bit, gray, wide, tiny, resize", deep_case)
 
     def determinism():
-        c0 = presets.build(look="my-own-funeral")
+        c0 = presets.build(look="vhs-on-tv")
         p1, _ = pipeline.render_image(c0, img, os.path.join(io, "det_a.png"), quality=q)
         p2, _ = pipeline.render_image(c0, img, os.path.join(io, "det_b.png"), quality=q)
         p3, _ = pipeline.render_image(
-            presets.build(look="my-own-funeral", seed=7), img, os.path.join(io, "det_c.png"), quality=q
+            presets.build(look="vhs-on-tv", seed=7), img, os.path.join(io, "det_c.png"), quality=q
         )
         a1, a2, a3 = assert_img(p1), assert_img(p2), assert_img(p3)
         assert np.array_equal(a1, a2), "same seed gave different output"
@@ -328,7 +326,7 @@ def run(out=None, quick=False, jobs=None, only=None) -> bool:
 
     def options():
         n = 0
-        base = dict(look="my-own-funeral")
+        base = dict(look="vhs-on-tv")
         variants: List[Dict[str, Any]] = [dict(mask=m) for m in presets.MASKS] + [
             dict(capture=c) for c in presets.CAPTURES
         ]
@@ -365,10 +363,10 @@ def run(out=None, quick=False, jobs=None, only=None) -> bool:
     def previews_img():
         st = preview.load_still(img, "native")
         d = os.path.join(out, "previews_image")
-        cfg = presets.build(look="my-own-funeral")
+        cfg = presets.build(look="vhs-on-tv")
         c = preview.compare(cfg, st, os.path.join(d, "compare"), quality=q)
         lad = preview.ladder(cfg, st, os.path.join(d, "ladder"), quality=q)
-        looks = None if not quick else ["my-own-funeral", "church-dub", "consumer-tv", "curved-80s-set"]
+        looks = None if not quick else ["vhs-on-tv", "church-dub", "consumer-tv", "curved-80s-set"]
         sh = preview.sheet(st, os.path.join(d, "sheet"), looks, tile_h=180 if quick else 300, jobs=jobs)
         res = page.preview_all(img, os.path.join(d, "all"), cfg, looks=looks, jobs=jobs, clip=False)
         html = open(res["page"], encoding="utf-8").read()
@@ -473,7 +471,7 @@ def run(out=None, quick=False, jobs=None, only=None) -> bool:
 
         def v_cfr():
             r = pipeline.render_video(
-                presets.build(look="my-own-funeral"), cfr, os.path.join(vo, "cfr_funeral.mp4"), quality=q, jobs=jobs
+                presets.build(look="vhs-on-tv"), cfr, os.path.join(vo, "cfr_vhs_on_tv.mp4"), quality=q, jobs=jobs
             )
             info = media.probe(r["path"])
             assert info["width"] == vw and info["height"] == vh
@@ -632,7 +630,7 @@ def run(out=None, quick=False, jobs=None, only=None) -> bool:
             R.check("video ProRes", v_prores)
 
         def v_det():
-            c = presets.build(look="my-own-funeral")
+            c = presets.build(look="vhs-on-tv")
             a1 = pipeline.render_video(c, noaud, os.path.join(vo, "det1.mp4"), quality="draft", jobs=jobs)
             a2 = pipeline.render_video(c, noaud, os.path.join(vo, "det2.mp4"), quality="draft", jobs=1)
             f1, f2 = decode_all(a1["path"]), decode_all(a2["path"])
@@ -655,9 +653,9 @@ def run(out=None, quick=False, jobs=None, only=None) -> bool:
             )
             info = media.probe(cl["path"])
             assert info["width"] == 512 and info["height"] == 192, f"{info['width']}x{info['height']}"
-            looks = ["my-own-funeral", "church-dub", "consumer-tv"] if quick else None
+            looks = ["vhs-on-tv", "church-dub", "consumer-tv"] if quick else None
             res = page.preview_all(
-                longv, os.path.join(d, "all"), presets.build(look="my-own-funeral"), looks=looks, t=2.0, jobs=jobs
+                longv, os.path.join(d, "all"), presets.build(look="vhs-on-tv"), looks=looks, t=2.0, jobs=jobs
             )
             html = open(res["page"], encoding="utf-8").read()
             assert "data:video/mp4;base64," in html, "clip not embedded"
@@ -668,7 +666,7 @@ def run(out=None, quick=False, jobs=None, only=None) -> bool:
 
         def v_rewind():
             r = rewind_cmd.render(
-                presets.build(look="my-own-funeral"),
+                presets.build(look="vhs-on-tv"),
                 longv,
                 os.path.join(vo, "rewind.mp4"),
                 3.5,

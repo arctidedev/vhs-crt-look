@@ -1,4 +1,4 @@
-"""A VCR in rewind search (the film's breakdown/tools/rewind_vhs.py): the source runs backwards fast, as a 1987 deck
+"""A VCR in rewind search: the source runs backwards fast, as a 1987 deck
 shows it. In visible search the heads cross several tracks per field, so noise bars (snow with bright streaks) roll
 down the picture with the picture from alternate tracks between them; rows shift sideways in a sawtooth with each
 bar (the shuttle's time-base error); the bottom lines bend at the head switch; the picture bounces a little while

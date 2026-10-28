@@ -1,6 +1,6 @@
-"""The VHS signal model of "My Own Funeral": a 1987 consumer camcorder, an SP recording, the playback deck, and
-optionally a deck-to-deck dub. A line-for-line port of the film's looktest.py (camcorder / record / playback /
-vhs_signal) and of the stage snapshots in breakdown/tools/vhs_stages.py, with SciPy replaced by sigproc.py.
+"""The VHS signal model: a 1987 consumer camcorder, an SP recording, the playback deck, and optionally a
+deck-to-deck dub, with a snapshot after every stage. A line-for-line port of the reference look-development code
+(camcorder / record / playback / vhs_signal), with SciPy replaced by sigproc.py.
 
 Signal model (NTSC VHS, 480 visible lines; 720 samples per picture height along each line, so 960 samples per
 active line on a 4:3 picture, 18.25 samples per microsecond):
@@ -55,7 +55,7 @@ def tvl_sigma(tvl: float) -> float:
 
 
 def rngs(i: int, P: dict, seed: int = 0):
-    """The film's per-frame random streams (camcorder, tape). seed 0 reproduces the film's noise exactly."""
+    """Per-frame random streams (camcorder, tape). Seed 0 reproduces the reference implementation's noise exactly."""
     tape_key = 20_000 + i * 7 + zlib.crc32(P["name"].encode()) % 1000
     if seed:
         return np.random.default_rng([seed, 10_000 + i]), np.random.default_rng([seed, tape_key])

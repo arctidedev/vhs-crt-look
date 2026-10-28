@@ -1,6 +1,6 @@
 ---
 name: vhs-crt-look
-description: Apply a physically modelled 1987 camcorder, VHS tape and CRT TV look to the user's own images and videos (the look from the short film My Own Funeral). Use whenever someone wants footage or stills to look like an old home video, a camcorder tape, a VHS copy or dub, a worn or EP tape, footage filmed off an old TV, scanlines or a phosphor mask, a camcorder date stamp, a VCR rewind, a retro 80s or 90s video look, or "the My Own Funeral look". Runs locally on any OS with Python, numpy, OpenCV and ffmpeg. Always previews several looks on the user's own media and asks which one before the final render.
+description: Apply a physically modelled 1987 camcorder, VHS tape and CRT TV look to the user's own images and videos. Use whenever someone wants footage or stills to look like an old home video, a camcorder tape, a VHS copy or dub, a worn or EP tape, footage filmed off an old TV, scanlines or a phosphor mask, a camcorder date stamp, a VCR rewind, or a retro 80s or 90s video look. Runs locally on any OS with Python, numpy, OpenCV and ffmpeg. Always previews several looks on the user's own media and asks which one before the final render.
 ---
 
 # VHS, camcorder and CRT look
@@ -10,15 +10,18 @@ A deterministic signal model, not a filter stack. The picture goes through what 
 - **Tape (S1 to S5):** a consumer camcorder (lens softness, tungsten white balance, highlight bloom, knee, AGC gain noise, the burned-in date), the 480-line interlaced raster, an SP recording (FM luma and colour-under chroma bandwidth in TV lines, tape noise, dropouts), the playback deck (time-base error, edge-enhancement halos, head-switching noise) and optionally a deck-to-deck dub.
 - **Tube (L0 to L6):** a CRT built per pixel in linear light: 480 Gaussian beam lines whose width follows beam current, a slot, aperture-grille or dot-triad phosphor mask band-limited by the filming camera, faceplate bloom and halation, the front glass, the tube's light on its bezel, and the camera that filmed it (one recorded field, the refresh roll, lens bloom, grain).
 
-Everything runs from `scripts/vhslook.py` in this skill's folder. Below, `VHSLOOK` means `python <this skill's folder>/scripts/vhslook.py` (use `python3` where `python` is Python 2 or missing). Quote paths with spaces.
+Everything runs from `scripts/vhslook.py` in this skill's folder. Below, `VHSLOOK` means `python3 <this skill's folder>/scripts/vhslook.py` (on Windows `python` or `py -3`). It switches to the skill's own Python environment by itself. Quote paths with spaces.
 
-## 1. Check the environment first
+## 1. First use: make sure it is set up
 
 ```
 VHSLOOK doctor
 ```
 
-It checks Python 3.9+, numpy, OpenCV and ffmpeg and prints the install command for this OS. If something is missing, show the user that command and, with their go-ahead, run it (`python -m pip install numpy opencv-python-headless`; ffmpeg: `brew install ffmpeg`, `winget install Gyan.FFmpeg`, `sudo apt install ffmpeg`, or `conda install -c conda-forge ffmpeg`). Images work without ffmpeg; video needs it. Never install anything without asking.
+- If it says the skill is not set up (numpy or OpenCV missing), run `VHSLOOK setup`. It creates the skill's own Python environment inside the skill folder and installs numpy and OpenCV there (about 60 MB, one time, nothing system-wide), then checks everything. Tell the user it is a one-time step.
+- If ffmpeg is missing, setup prints the single command that installs it on this machine. Ask the user, and on a yes run `VHSLOOK setup --yes`. Stills work without ffmpeg; video needs it.
+- If Python itself is missing or older than 3.9, point the user to the installer that came with the skill (`INSTALL-mac.command`, `INSTALL-windows.bat` or `install.sh`) or to python.org.
+- Never install anything without asking.
 
 ## 2. The workflow (follow it every time)
 
@@ -53,8 +56,8 @@ It checks Python 3.9+, numpy, OpenCV and ffmpeg and prints the install command f
 
 | look | what it is |
 |---|---|
-| `my-own-funeral` (default) | the film's full chain: second-generation SP dub, slot-mask tube with the film's treatment, filmed off the TV |
-| `church-dub` | the film's tape alone, second-generation SP dub, captured from the deck |
+| `vhs-on-tv` (default) | the full chain: second-generation SP dub on a slot-mask TV, filmed with a camera |
+| `church-dub` | the same tape alone: second-generation SP dub, captured from the deck |
 | `home-camcorder` | camcorder original on SP, captured from the deck |
 | `clean-deck` | the cleanest picture that still reads as VHS |
 | `ep-longplay` | six-hour EP copy: soft, noisy, dull colour |
@@ -101,8 +104,8 @@ Example: `-s noise=0.5 -s dropouts=0 -s halos=1.5`.
 - `--off a,b`: switch stages off: `camcorder, date, record, playback, dub, beams, mask, glow, glass, light, camera`.
 - `--gens N`: tape generations (1 original, 2 a dub, 3 a dub of a dub).
 - `--mask slot|grille|dot|none`, `--curvature 0..1` (0 flat 2000s tube, 1 curved 1980s set), `--fill X` (1 = raster edge to edge, 0.85 shows the bezel, 1.3 zooms in).
-- `--frame native|crop43|pad43`, `--width` / `--height` (aspect kept), `--quality standard|high` (high renders the tube at 2x and downsamples, as the film did; default for stills, standard for video, nearly identical at normal viewing size).
-- `--mix 0..1`: blend with the original. `--seed N`: different noise (0 = the film's own); same seed, same output.
+- `--frame native|crop43|pad43`, `--width` / `--height` (aspect kept), `--quality standard|high` (high renders the tube at 2x and downsamples; default for stills, standard for video, nearly identical at normal viewing size).
+- `--mix 0..1`: blend with the original. `--seed N`: different noise (0 = the reference noise); same seed, same output.
 - `--reflection IMAGE`: an image the TV glass mirrors (the room behind the camera).
 - `--set section.key=value`: any raw parameter, for example `--set vhs.luma_tvl=[200,180]` or `--set crt.overscan=1.0` (a TV crops about 7 % of the edges by default; this turns that off). `VHSLOOK params [options]` prints every resolved value.
 - Video: `--start`, `--duration`, `--fps`, `--audio copy|aac|vhs|tv|none` (copy is the default and keeps the source audio untouched when the container allows; `vhs` gives it the camcorder's linear track, `tv` plays it out of a small TV speaker), `--codec h264|prores`, `--crf`, `--jobs`.
@@ -121,12 +124,12 @@ Measured on an Apple M5 Pro with the default 8 worker processes, at about 2 mega
 
 ## 6. Troubleshooting
 
-- `ModuleNotFoundError: cv2` or `numpy`: `python -m pip install numpy opencv-python-headless` (the headless build avoids the libGL error on servers).
-- `ffmpeg and ffprobe are needed for video`: install ffmpeg (see doctor) or set `VHSLOOK_FFMPEG` and `VHSLOOK_FFPROBE`.
+- "not set up yet" or a missing `cv2` / `numpy`: run `VHSLOOK setup` (add `--force` to rebuild a broken environment).
+- "ffmpeg is needed for video": run `VHSLOOK setup` (it offers to install ffmpeg), or set `VHSLOOK_FFMPEG` and `VHSLOOK_FFPROBE`. ffmpeg installed but not found: setup also looks in the usual Homebrew, winget, Chocolatey, Scoop and conda folders; otherwise restart the terminal or Claude.
 - `libx264` missing: the skill falls back to another H.264 encoder or MPEG-4; doctor reports which.
 - Slow: keep `--quality standard`, use `--height 720`, or raise `--jobs` toward the core count if memory allows.
 - Verify an install end to end: `VHSLOOK selftest --quick` builds synthetic media and runs every look and output type.
 
 ## 7. Fidelity
 
-The tape chain is a line-for-line port of the film's own look-test code; on the film's source frames it reproduces the film's tape signal to within 6e-6 of full scale with seed 0, on all seven tape presets. The tube is a numpy port of the film's three.js tube shader, with the same parameters. The film's separate 2005 film-camera grade, its room relighting and its camera dolly are not part of this skill.
+The tape chain is a line-for-line port of the reference look-development code; on the same source frames it reproduces the reference tape signal to within 6e-6 of full scale with seed 0, on all seven tape presets. The tube is a numpy port of the reference three.js tube shader, with the same parameters.

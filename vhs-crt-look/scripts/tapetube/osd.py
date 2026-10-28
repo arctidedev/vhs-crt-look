@@ -1,6 +1,6 @@
 """The camcorder's on-screen-display lettering and the burned-in date stamp.
 
-GLYPHS is the film's 5x7 OSD drawing (squared C and O, single-cell strokes): the 1987 date stamp's digits and
+GLYPHS is a 5x7 OSD drawing (squared C and O, single-cell strokes): the 1987 date stamp's digits and
 letters, completed to A-Z, the VCR's play arrow and divider, plus a few punctuation marks for labels.
 """
 
@@ -71,8 +71,8 @@ GLYPHS = {
     "x": [".....", ".....", "#...#", ".#.#.", "..#..", ".#.#.", "#...#"],
 }
 
-# The film's stamp placement (comp/look.json tape block): margins from the right and bottom edges, given on a
-# 640x480 frame and scaled with the picture height.
+# The stamp placement: margins from the right and bottom edges, given on a 640x480 frame and scaled with the
+# picture (the side margin with the width, the bottom margin with the height).
 DATE_MARGIN_RIGHT = 84
 DATE_MARGIN_BOTTOM = 70
 DEFAULT_DATE = "OCT 26 1987"
@@ -111,9 +111,8 @@ def text_mask(
 def stamp_layout(cw_px: int, ch_px: int, text: str, pos: str = "br", cell: Optional[int] = None):
     """Cell size and top-left corner of the date stamp on a cw_px x ch_px camcorder raster.
 
-    The film placed the stamp 84 px from the right and 70 px from the bottom of a 640x480 frame with 6 px cells on
-    the 960x720 raster. Both scale with the picture height; on narrow (portrait) rasters the cell shrinks until the
-    text fits between equal side margins."""
+    The stamp sits 84 px from the right and 70 px from the bottom of a 640x480 frame, with 6 px cells on the
+    960x720 raster. On narrow (portrait) rasters the cell shrinks until the text fits between equal side margins."""
     s = ch_px / 480.0
     cell = cell or max(1, int(round(6 * ch_px / 720.0)))
     mr, mb = DATE_MARGIN_RIGHT * cw_px / 640.0, DATE_MARGIN_BOTTOM * s  # side margin follows the width (portrait)
@@ -133,7 +132,7 @@ def stamp_layout(cw_px: int, ch_px: int, text: str, pos: str = "br", cell: Optio
 
 
 def draw_date(img: np.ndarray, text: str, pos: str = "br", cell: Optional[int] = None) -> np.ndarray:
-    """The camcorder's burned-in stamp as the film drew it (comp/prep_tape.py): white blocky glyphs, a one-cell dark
+    """The camcorder's burned-in stamp: white blocky glyphs, a one-cell dark
     edge, and the character generator's own edge softness (0.9 px Gaussian on the 960x720 raster)."""
     h, w = img.shape[:2]
     cell, x0, y0 = stamp_layout(w, h, text, pos, cell)
