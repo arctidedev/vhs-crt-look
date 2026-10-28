@@ -110,7 +110,7 @@ Example: `-s noise=0.5 -s dropouts=0 -s halos=1.5`.
 
 ## 4. Media handling
 
-- Any size and aspect, odd sizes included. Portrait stays portrait (480 lines over the picture height, the line length follows the width), unless `--frame crop43|pad43`.
+- Any size and aspect, odd sizes included. Portrait stays portrait (480 lines over the picture height, the line length follows the width), unless `--frame crop43|pad43`. A 9:16 frame therefore carries about 400 samples across its width and looks softer than a 4:3 one, as a vertical crop of a real TV picture would; say so when previewing portrait media.
 - Stills: PNG, JPEG (EXIF rotation honoured), TIFF, WebP, BMP, 16-bit PNG/TIFF (kept 16-bit), grayscale. Transparent images keep their alpha (the picture is composited over black before the tape, the alpha is carried through the tube's geometry).
 - Video: anything ffmpeg reads. Rotation metadata and non-square pixels are applied. Variable frame rate becomes constant at the source's average rate (or `--fps`). Output dimensions are rounded to even numbers for H.264. Frames stream through ffmpeg pipes and worker processes, so length is limited by time, not memory. Audio is put back under the picture with the same trim.
 - Output never overwrites the input; write next to it with a suffix unless the user names a path.

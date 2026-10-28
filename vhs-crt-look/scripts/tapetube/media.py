@@ -440,6 +440,16 @@ AUDIO_FILTERS = {
 }
 
 
+def _default_mode(path: str):
+    """Temporary files are created private (0600); a finished output gets the usual permissions."""
+    um = os.umask(0)
+    os.umask(um)
+    try:
+        os.chmod(path, 0o666 & ~um)
+    except OSError:
+        pass
+
+
 def mux_audio(video_only: str, src: str, out: str, start=None, duration=None, mode: str = "copy", length=None) -> str:
     """Put the source's audio (same trim) under the rendered picture. mode: copy (untouched when the container
     allows it), aac, vhs, tv, none."""
@@ -447,6 +457,7 @@ def mux_audio(video_only: str, src: str, out: str, start=None, duration=None, mo
     info = probe(src)
     if mode == "none" or not info["audio"]:
         shutil.move(video_only, out)
+        _default_mode(out)
         return "none" if mode == "none" else "no audio in source"
     trim = []
     if start:
