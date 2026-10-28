@@ -10,30 +10,23 @@ Canonical instructions for any agent (Codex, Claude Code, others) working in thi
 
 ## Commands
 
-- Build/run: `uv run python -m vhs_crt_look`
-- Test: `uv run pytest`
-- Lint: `uv run ruff check .`
+- Run: `python vhs-crt-look/scripts/vhslook.py <command>` (doctor, looks, info, preview, render, compare, ladder, sheet, clip, page, rewind, params, selftest)
+- Test: `python -m pytest -q` and `python vhs-crt-look/scripts/vhslook.py selftest --quick`
+- Lint: `ruff check .`
+- Fidelity against the film: `python3 tools/fidelity_check.py <film project dir>` (needs SciPy and the film project, read-only)
+- Package: `python tools/package_skill.py` (dist/vhs-crt-look-skill.zip); install: `python install.py`
 
 ## Engineering Conventions
 
-Python 3.13+, type hints everywhere, Pydantic v2 models, Click CLI, pathlib.Path, f-strings, snake_case functions, PascalCase classes
+- The skill package is `vhs-crt-look/`; it must stay self-contained and portable: Python 3.9+, numpy and opencv-python-headless only (no SciPy, no PIL), ffmpeg/ffprobe through subprocess for video. Paths via os.path, binary pipes, `if __name__ == "__main__"` guards (Windows spawns worker processes).
+- The tape chain (`tapetube/vhs.py`) is a line-for-line port of the film's `looktest.py`; keep it numerically faithful (run the fidelity check after touching it). Parameter names match the film's (`presets/looks.json`).
+- Deterministic: per-frame random streams from (seed, frame index), never from worker order.
+- Video streams frame by frame; never hold a whole clip in memory.
+- Copy (SKILL.md, README, labels, page): neutral technical wording, no em dashes.
 
-## Instrumentation Compliance (REQUIRED INFRASTRUCTURE)
+## Instrumentation
 
-This project was scaffolded with the Arctide instrumented baseline. The following are non-negotiable:
-
-- **MetricKit** subscribed at app launch; payloads persist to `Documents/metrics/`.
-- **OSLog** with subsystem = bundle ID and categories `app | network | data | ui` (see `Sources/Logger.swift`).
-- **Sentry** initialized via xcconfig-injected `SENTRY_DSN` (no-op when empty).
-- **TelemetryDeck** initialized via xcconfig-injected `TELEMETRYDECK_APP_ID` (no-op when empty).
-- **Snapshot tests** target (`*SnapshotTests`) is a first-class part of CI/preflight.
-- **Accessibility identifiers** on every interactive view, lint-enforced via `accessibility_identifier_required`. Add cases to `Sources/Instrumentation/AccessibilityIdentifiers.swift`.
-- **Deep-link debug routing** for every screen (`Sources/Instrumentation/DebugRouter.swift`); URL scheme registered in `Info.plist`.
-- **Typed analytics taxonomy** (`Sources/Telemetry/EventTaxonomy.swift`); never emit raw event names.
-- **Privacy Manifest** (`Resources/PrivacyInfo.xcprivacy`) pre-populated; trim unused entries pre-submission, never empty.
-- **Per-environment xcconfigs** (`xcconfigs/{Debug,Release,TestFlight,AppStore}.xcconfig`); drift checker fails on missing keys.
-
-DO NOT bypass these for "simplicity" or "speed of feature work". Future agents that strip instrumentation should be reverted.
+The arctide iOS instrumentation baseline does not apply (no app target). The only UI is the offline comparison page (`vhs-crt-look/scripts/page-template.html`): every interactive element carries a `data-testid`, design notes live in `DESIGN.md`.
 
 ## Rules
 

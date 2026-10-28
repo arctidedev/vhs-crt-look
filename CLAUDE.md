@@ -22,18 +22,8 @@ Canonical project rules live in `AGENTS.md` (imported above). This file adds Cla
 - Parent CLAUDE.md: `~/Projects/AI/CLAUDE.md` (hub-wide Claude extensions).
 - Cross-tool log: `.shared/cross-tool-log.md` (gitignored; auto-updated by hub PostToolUse hook).
 - Health check: `bash ~/Projects/AI/scripts/health-cross-sync.sh`.
-- Design quality: load the `design-quality` skill for UI work, use the session's Opus model at `max` effort for taste-sensitive direction (subagents and workflows omit `model` to inherit it; never `fable`/`best` unless Raul explicitly asks, since Fable has a separate weekly limit) — then run `{{DESIGN_CHECK_COMMAND}}`.
+- Design quality: load the `design-quality` skill for UI work, use the session's Opus model at `max` effort for taste-sensitive direction (subagents and workflows omit `model` to inherit it; never `fable`/`best` unless Raul explicitly asks, since Fable has a separate weekly limit) — then run `bash ../scripts/design-quality-check.sh --repo-path .`.
 
-## Instrumentation Compliance (mirrored from AGENTS.md)
+## Instrumentation
 
-This project ships with the Arctide instrumented baseline. The PostToolUse hooks
-enforce these in real time as you edit:
-
-- `accessibility-identifier-enforcer.sh` — every Button/TextField/Toggle/Stepper/Picker requires `.accessibilityIdentifier(AccessibilityID.<case>.rawValue)`.
-- `metrickit-wiring-checker.sh` — `*App.swift` must wire `MetricKitSubscriber.shared.start()`.
-- `deeplink-coverage-checker.sh` — every `*View.swift` with a navigation title must have a route in `DebugRouter.swift`.
-- `xcconfig-drift-checker.sh` — Debug/Release/TestFlight/AppStore xcconfigs must declare the same critical keys.
-
-If a hook fires, fix the issue rather than disabling the hook. To opt out a single
-file, add `// instrumentation:disable <hook-name>` at the top with a written
-justification.
+Not applicable here (Python CLI skill, no app target); see AGENTS.md. The comparison page's interactive elements carry `data-testid`.
