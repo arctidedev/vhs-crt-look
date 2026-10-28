@@ -59,8 +59,10 @@ If someone asks you to install this skill:
 2. Run the installer from that folder:
    - macOS and Linux: `bash install.sh`
    - Windows: `cmd /c "Install on Windows.bat" --no-pause`
-3. If it reports that ffmpeg is missing, it prints the command that installs it. Ask the user. On a yes, run the installer again with `--yes` (Windows: `cmd /c "Install on Windows.bat" --yes`).
-4. When it prints **All set**, tell the user to start a new chat. The skill is then in `~/.claude/skills/vhs-crt-look`.
+   This installs the skill's own Python packages into its private folder: that is part of the install the user asked for. It installs nothing system-wide on its own.
+3. If it reports that ffmpeg is missing, it prints the command that installs it. That one is system software: ask the user, and on a yes run the installer again with `--yes` (Windows: `cmd /c "Install on Windows.bat" --yes`).
+4. When it prints **All set**, tell the user to start a new chat. The skill is then in `$CLAUDE_CONFIG_DIR/skills/vhs-crt-look` when that variable is set (the same folder the running Claude reads), otherwise `~/.claude/skills/vhs-crt-look`.
+5. The unzipped folder was only needed for the install: offer to delete it.
 
 ---
 

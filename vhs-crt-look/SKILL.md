@@ -21,7 +21,7 @@ VHSLOOK doctor
 - If it says the skill is not set up (numpy or OpenCV missing), run `VHSLOOK setup`. It creates the skill's own Python environment inside the skill folder and installs numpy and OpenCV there (about 60 MB, one time, nothing system-wide), then checks everything. Tell the user it is a one-time step.
 - If ffmpeg is missing, setup prints the single command that installs it on this machine. Ask the user, and on a yes run `VHSLOOK setup --yes`. Stills work without ffmpeg; video needs it.
 - If Python itself is missing or older than 3.9, point the user to the installer that came with the skill (`Install on Mac.command`, `Install on Windows.bat` or `install.sh`) or to python.org.
-- Never install anything without asking.
+- The skill's own packages (numpy, OpenCV in its private folder) are part of setting it up. Never install system software (ffmpeg, Python, package managers) without asking.
 
 ## 2. The workflow (follow it every time)
 

@@ -125,7 +125,7 @@ def main(argv=None) -> int:
     r = subprocess.run([VENV_PY, os.path.join(HERE, "vhslook.py"), "doctor"], env=dict(os.environ, VHSLOOK_IN_VENV="1"))
     say()
     if r.returncode == 0 and ff_ok:
-        say("All set. Restart Claude Code (or start a new chat), then ask for example:")
+        say("All set. Start a new chat in Claude Code, then ask for example:")
         say('   "Make ~/Movies/birthday.mp4 look like an old VHS home video."')
         return 0
     if r.returncode == 0:
