@@ -32,7 +32,7 @@ python -m venv .venv && .venv/bin/python -m pip install -r vhs-crt-look/requirem
 
 ## Fidelity
 
-`tools/fidelity_check.py <film project>` feeds identical frames to this tape chain and to the film's `looktest.py`. With seed 0 the final tape signal matches to within 5e-6 of full scale (an 8-bit step is 3.9e-3). The tube is a numpy port of the film's three.js face shader (`comp/index_bd2.html`, look.json crt, tube and camera blocks).
+`tools/fidelity_check.py <film project>` feeds identical frames to this tape chain and to the film's `looktest.py`. With seed 0 the final tape signal matches to within 6e-6 of full scale on all seven tape presets V1 to V7 (an 8-bit step is 3.9e-3). The tube is a numpy port of the film's three.js face shader (`comp/index_bd2.html`, look.json crt, tube and camera blocks).
 
 ## Quality gates
 

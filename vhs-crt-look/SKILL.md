@@ -129,4 +129,4 @@ Measured on an Apple M5 Pro with the default 8 worker processes, at about 2 mega
 
 ## 7. Fidelity
 
-The tape chain is a line-for-line port of the film's own look-test code; on the film's source frames it reproduces the film's tape signal to within 5e-6 of full scale with seed 0. The tube is a numpy port of the film's three.js tube shader, with the same parameters. The film's separate 2005 film-camera grade, its room relighting and its camera dolly are not part of this skill.
+The tape chain is a line-for-line port of the film's own look-test code; on the film's source frames it reproduces the film's tape signal to within 6e-6 of full scale with seed 0, on all seven tape presets. The tube is a numpy port of the film's three.js tube shader, with the same parameters. The film's separate 2005 film-camera grade, its room relighting and its camera dolly are not part of this skill.
