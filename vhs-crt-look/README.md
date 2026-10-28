@@ -1,51 +1,67 @@
-# vhs-crt-look
+# VHS + CRT look for Claude
 
-A 1987 camcorder, VHS tape and CRT TV look as a free skill for Claude (and a plain command-line tool) that anyone can run on their own images and videos.
+Make any photo or video look like a 1987 home video played on an old TV, just by asking Claude. Free, and it runs on your own computer.
 
-It is a signal model, not a filter: the picture goes through a consumer camcorder, an SP recording, a playback deck, optionally a dub, and then a CRT built per pixel (beam lines, phosphor mask, glow, glass) and the camera that filmed it. Every stage can be switched off or turned up or down, and every choice is previewed on your own media before the final render.
+## Install (a minute or two)
 
-## Install (about two minutes)
+You need **Claude Code** (the **Code** tab in the Claude desktop app works too).
 
-1. Unzip `vhs-crt-look-skill.zip`.
-2. Double-click the installer in the unzipped folder:
-   - **Mac:** `INSTALL-mac.command`. The first time, macOS may block a downloaded file: right-click it, choose **Open**, then **Open** again.
-   - **Windows:** `INSTALL-windows.bat`. If Windows shows "Windows protected your PC", click **More info**, then **Run anyway**.
-   - **Linux:** open a terminal in the folder and run `bash install.sh`.
-3. When it says **All set**, restart Claude Code and ask, for example: *"Make ~/Movies/birthday.mp4 look like an old VHS home video."*
+1. Double-click the installer in this folder:
+   - **Install on Mac** on a Mac
+   - **Install on Windows** on Windows (if you opened the zip without extracting it, right-click the zip, choose **Extract All**, and use the extracted folder)
+   - On Linux, open a terminal in this folder and run `bash install.sh`
+2. Wait until it says **All set**.
+3. Start a new chat in Claude Code.
 
-The installer copies the skill into Claude Code (`~/.claude/skills/vhs-crt-look`), gives it its own Python packages (numpy and OpenCV, about 60 MB, nothing installed system-wide), and checks for ffmpeg, which video needs. If ffmpeg is missing it shows the one command that installs it and asks before running it. If Python is missing it says how to get it (on Windows it offers to install it).
+**Even easier:** open Claude Code and say *"Install the VHS skill from this folder: "* followed by where this folder is (for example `~/Downloads/vhs-crt-look`). Claude does the steps for you.
 
-**Even simpler:** in Claude Code, say *"Install the skill in ~/Downloads/vhs-crt-look-skill.zip"* and let Claude do the steps above.
+**If something gets in the way:**
 
-Claude then does the rest each time: it renders every look on your own photo or clip, shows you a contact sheet and a before/after page, asks which look and how strong, refines the previews with you, and only then renders the final file.
+- **Mac says it can't open "Install on Mac":** click **Done**, open **System Settings > Privacy & Security**, scroll down and click **Open Anyway**. On older macOS, right-click the file and choose **Open** instead.
+- **Windows says "Windows protected your PC":** click **More info**, then **Run anyway**.
+- **Python is missing:** on a Mac, if a window offers the *command line developer tools*, click **Install** and run the installer again when it's done. On Windows, the installer offers to install Python: say yes. Or get it from [python.org/downloads](https://www.python.org/downloads/).
+- **ffmpeg is missing** (needed for video, not photos): the installer shows the command that installs it and asks first. Type **y** and press Enter.
 
-**Requirements, for reference:** Python 3.9 or newer, numpy, opencv-python-headless, and ffmpeg (with ffprobe) for video. No GPU, browser or internet connection is needed after setup. macOS, Windows and Linux.
+The installer copies this folder to `~/.claude/skills/vhs-crt-look` (Windows: `%USERPROFILE%\.claude\skills\vhs-crt-look`) and gives it its own Python packages there (about 60 MB, nothing system-wide). Run it again any time to update.
 
-**Other Claude apps that accept custom skills:** upload the zip. Video there needs an environment with ffmpeg.
+## Use it
 
-## Use it without Claude
+Start a new chat in Claude Code and ask, for example:
+
+> Make ~/Movies/birthday.mp4 look like an old VHS home video.
+
+> Make this photo look like it was filmed off an old TV: ~/Desktop/portrait.jpg
+
+Claude shows you all 16 looks on your own photo or clip and a before/after page, asks which one and how strong, shows a preview, and then makes the final file next to your original. Your original is never changed.
+
+## Uninstall
+
+Delete the folder `~/.claude/skills/vhs-crt-look` (Windows: `%USERPROFILE%\.claude\skills\vhs-crt-look`).
+
+## Without Claude
+
+It's also a command-line tool. From this folder:
 
 ```
-python scripts/vhslook.py setup                           # one time: own environment, numpy, OpenCV, ffmpeg
-python scripts/vhslook.py doctor                          # check the setup
-python scripts/vhslook.py preview clip.mp4 --open         # sheet + compare + ladder + clip + page
-python scripts/vhslook.py render clip.mp4 out.mp4 --look church-dub -s noise=0.6 --date "JUL 4 1989"
-python scripts/vhslook.py render photo.jpg out.png --look curved-80s-set
-python scripts/vhslook.py rewind clip.mp4 rewind.mp4 --from 6 --to 2 --duration 2
-python scripts/vhslook.py looks                           # every look, preset, strength and stage
-python scripts/vhslook.py selftest --quick                # synthetic media through everything
+python3 scripts/vhslook.py setup                          # one time
+python3 scripts/vhslook.py preview my-clip.mp4 --open     # every look on your clip, in a page
+python3 scripts/vhslook.py render my-clip.mp4 my-clip-vhs.mp4 --look worn-tape
+python3 scripts/vhslook.py looks                          # all looks and options
 ```
 
-`SKILL.md` has the complete option reference.
+`SKILL.md` has every option.
 
-## What is modelled
+## Note for Claude
 
-**Tape:** lens and pickup softness, tungsten white balance, highlight bloom, CCD smear or tube lag, the camera's knee, AGC gain noise, the burned-in date in the camcorder's own 5x7 lettering, a 480-line interlaced raster, FM luma and colour-under chroma bandwidth in TV lines, the 1H chroma comb, tape luma and chroma noise, dropouts, chroma delay, time-base error (line jitter, tape-stretch wobble, top flagging, head-switching skew), edge-enhancement halos, head-switching noise, a tracking band, lifted VHS black, and second or third generations.
+If someone asks you to install this skill:
 
-**Tube:** overscan, residual pincushion, rounded raster corners, 480 Gaussian beam lines whose width grows with beam current, beam defocus toward the corners, misconvergence, a slot, aperture-grille (with damper wires) or dot-triad mask as a band-limited Fourier series convolved with the filming camera's PSF (so it resolves only when the screen is large in frame and never aliases), white smear, faceplate bloom and halation, milky lift, tube black, the room's reflection and a lamp specular on the glass, the picture's light on the bezel, one recorded 240-line field, the refresh roll of an unsynced shutter, lens bloom, glare and camera grain.
+1. If you were given the zip, unzip it first (for example into the Downloads folder) and work in the unzipped `vhs-crt-look` folder, the one holding this file.
+2. Run the installer from that folder:
+   - macOS and Linux: `bash install.sh`
+   - Windows: `cmd /c "Install on Windows.bat" --no-pause`
+3. If it reports that ffmpeg is missing, it prints the command that installs it. Ask the user. On a yes, run the installer again with `--yes` (Windows: `cmd /c "Install on Windows.bat" --yes`).
+4. When it prints **All set**, tell the user to start a new chat. The skill is then in `~/.claude/skills/vhs-crt-look`.
 
-**Rewind:** a VCR in visible search: noise bars rolling down, sideways sawtooth skew, head-switch bend, the deck accelerating and slowing.
+---
 
-## Credits and licence
-
-By Raul Brito. Released under the MIT licence (see `LICENSE`): use it, change it, ship it.
+Made by Raul Brito. Free under the MIT licence (see `LICENSE`).

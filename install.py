@@ -7,7 +7,7 @@
 
 The user skills folder is $CLAUDE_CONFIG_DIR/skills when that variable is set, otherwise ~/.claude/skills.
 An existing installation is updated in place (its Python environment is kept).
-People who downloaded the zip use INSTALL-mac.command, INSTALL-windows.bat or install.sh inside it instead.
+People who downloaded the zip use "Install on Mac", "Install on Windows" or install.sh inside it instead.
 """
 
 import argparse

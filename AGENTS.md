@@ -15,6 +15,7 @@ Canonical instructions for any agent (Codex, Claude Code, others) working in thi
 - Lint: `ruff check .`
 - Fidelity against the reference: `python3 tools/fidelity_check.py <reference project dir>` (needs SciPy and that project, read-only)
 - Package: `python tools/package_skill.py` (dist/vhs-crt-look-skill.zip); install: `python install.py`
+- Docs: `README.md` is for people installing and using the skill (keep it plain and short); developer notes live in `DEVELOPMENT.md`; the zip's own `vhs-crt-look/README.md` mirrors the install steps and carries the "Note for Claude".
 
 ## Engineering Conventions
 
