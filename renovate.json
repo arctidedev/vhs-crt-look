@@ -1,0 +1,32 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": ["config:recommended"],
+  "schedule": ["on monday and thursday"],
+  "labels": ["dependencies"],
+  "automerge": true,
+  "automergeType": "pr",
+  "automergeStrategy": "squash",
+  "packageRules": [
+    {
+      "matchUpdateTypes": ["patch", "minor"],
+      "automerge": true
+    },
+    {
+      "matchUpdateTypes": ["major"],
+      "automerge": false,
+      "labels": ["dependencies", "breaking-change"]
+    },
+    {
+      "matchDepTypes": ["devDependencies"],
+      "automerge": true
+    }
+  ],
+  "vulnerabilityAlerts": {
+    "labels": ["security"],
+    "automerge": true
+  },
+  "prConcurrentLimit": 3,
+  "prCreation": "not-pending",
+  "semanticCommits": "enabled",
+  "commitMessagePrefix": "chore(deps):"
+}

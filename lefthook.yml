@@ -1,0 +1,21 @@
+---
+skip_lfs: true
+
+pre-commit:
+  jobs:
+    - name: autofix
+      run: bash .arctide/hooks/pre-commit.sh --fix
+      stage_fixed: true
+    - name: check
+      run: bash .arctide/hooks/pre-commit.sh --check
+
+commit-msg:
+  jobs:
+    - name: commit-msg
+      run: bash .arctide/hooks/commit-msg.sh {1}
+
+pre-push:
+  jobs:
+    - name: pre-push
+      use_stdin: true
+      run: bash .arctide/hooks/pre-push.sh

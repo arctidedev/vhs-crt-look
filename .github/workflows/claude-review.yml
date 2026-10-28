@@ -1,0 +1,25 @@
+---
+name: Claude Code Review
+on:
+  workflow_dispatch:
+
+jobs:
+  claude-review:
+    runs-on: [self-hosted, macOS, ARM64]
+    permissions:
+      contents: read
+      pull-requests: write
+      issues: write
+    steps:
+      - uses: anthropics/claude-code-action@v1
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          # Intentionally "sonnet" (not opus): CI code review does not benefit
+          # from Opus-tier reasoning and Sonnet is ~5x cheaper per review.
+          # Revisit if reviewer accuracy drops.
+          claude_args: "--model sonnet"
+          prompt: |
+            Review this PR for: security issues, code quality, test coverage,
+            and adherence to CLAUDE.md conventions.
+            Be concise. Use APPROVE/REQUEST_CHANGES/COMMENT format.
+            List issues by severity: CRITICAL > WARNING > SUGGESTION.

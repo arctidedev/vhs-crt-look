@@ -1,0 +1,5 @@
+# Keep room for layered AGENTS.md files and allow gradual migration from CLAUDE.md.
+# Codex does not create git worktrees on session start; use the parent hub's
+# scripts/codex-worktree-session.sh launcher for isolated Codex sessions.
+project_doc_fallback_filenames = ["CLAUDE.md"]
+project_doc_max_bytes = 65536

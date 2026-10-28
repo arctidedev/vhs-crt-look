@@ -1,0 +1,51 @@
+name: Auto-merge passing PRs
+
+on:
+  workflow_dispatch:
+
+jobs:
+  auto-merge:
+    if: github.event_name != 'check_suite' || github.event.check_suite.conclusion == 'success'
+    runs-on: [self-hosted, macOS, ARM64]
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - name: Auto-merge ready PRs
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          PATH: /opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          prs="$(
+            gh pr list --state open --json number,isDraft \
+              --jq '.[] | select(.isDraft | not) | .number'
+          )"
+
+          if [[ -z "$prs" ]]; then
+            echo "No eligible open PRs."
+            exit 0
+          fi
+
+          while IFS= read -r pr; do
+            [[ -z "$pr" ]] && continue
+
+            echo "Checking PR #$pr"
+            checks_json="$(gh pr checks "$pr" --json name,state,workflow 2>/dev/null || echo '[]')"
+
+            if jq -e '
+              def advisory:
+                ((.name + " " + (.workflow // "")) | ascii_downcase | test("claude|danger"));
+              [ .[] | select(advisory | not) ] as $required
+              | ($required | length) > 0
+              and all($required[]; .state == "SUCCESS" or .state == "SKIPPING")
+            ' >/dev/null <<<"$checks_json"; then
+              echo "Merging PR #$pr"
+              gh pr merge "$pr" --squash --delete-branch
+            else
+              echo "PR #$pr is not ready yet."
+            fi
+          done <<< "$prs"

@@ -1,0 +1,73 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash /Users/raul.brito/Projects/AI/scripts/hook-dispatch.sh dangerous-command-blocker",
+            "timeout": 5000
+          }
+        ]
+      },
+      {
+        "matcher": "Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash /Users/raul.brito/Projects/AI/scripts/hook-dispatch.sh secret-scanner",
+            "timeout": 5000
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash /Users/raul.brito/Projects/AI/scripts/hook-dispatch.sh quality-checker",
+            "timeout": 15000
+          },
+          {
+            "type": "command",
+            "command": "bash /Users/raul.brito/Projects/AI/scripts/hook-dispatch.sh test-runner-post-edit",
+            "timeout": 30000
+          }
+        ]
+      }
+    ],
+    "PreCompact": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash /Users/raul.brito/Projects/AI/scripts/hook-dispatch.sh pre-compact-snapshot",
+            "timeout": 10000
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash /Users/raul.brito/Projects/AI/scripts/hook-dispatch.sh checkpoint-commit",
+            "timeout": 20000
+          },
+          {
+            "type": "command",
+            "command": "bash /Users/raul.brito/Projects/AI/scripts/hook-dispatch.sh end-of-session-audit",
+            "timeout": 30000
+          }
+        ]
+      }
+    ]
+  },
+  "env": {
+    "PROJECT_NAME": "vhs-crt-look"
+  }
+}

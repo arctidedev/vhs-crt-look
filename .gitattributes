@@ -1,0 +1,36 @@
+* text=auto eol=lf
+
+# >>> arctide-auto-resolver BEGIN (managed by install-merge-drivers.sh) >>>
+# Source: /Users/raulbrito/Projects/AI/shared/git-attributes/python.gitattributes
+# Regenerate: scripts/install-merge-drivers.sh <project> python
+# Auto-resolver shared attrs — Python projects (CLIs, MCP servers)
+# Managed by scripts/install-merge-drivers.sh. Do not edit by hand.
+
+*               text=auto eol=lf
+
+# Mergiraf — Python + common metadata
+*.py            merge=mergiraf
+*.pyi           merge=mergiraf
+*.json          merge=mergiraf
+*.jsonc         merge=mergiraf
+*.yaml          merge=mergiraf
+*.yml           merge=mergiraf
+*.toml          merge=mergiraf
+*.md            merge=mergiraf
+
+# Lockfiles — take ours, regenerate
+requirements.txt        merge=ours
+requirements-*.txt      merge=ours
+Pipfile.lock            merge=ours
+poetry.lock             merge=ours
+uv.lock                 merge=ours
+pdm.lock                merge=ours
+
+# Binary artifacts
+*.whl                   binary
+*.egg                   binary
+*.pyc                   binary
+*.pyo                   binary
+*.so                    binary
+*.dylib                 binary
+# <<< arctide-auto-resolver END <<<
