@@ -7,7 +7,7 @@ license = { text = "MIT" }
 requires-python = ">=3.9"
 dependencies = ["numpy>=1.20", "opencv-python-headless>=4.5"]
 
-[project.optional-dependencies]
+[dependency-groups]
 dev = ["pytest>=7", "ruff>=0.5"]
 
 [tool.ruff]

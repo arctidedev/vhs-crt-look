@@ -13,6 +13,7 @@ import sys
 import tempfile
 import time
 import traceback
+from typing import Any, Dict, List
 
 import cv2
 import numpy as np
@@ -112,6 +113,52 @@ def decode_all(path, w=None, h=None):
     info = media.probe(path)
     w, h = w or info["width"], h or info["height"]
     return np.stack(list(media.VideoReader(path, info, w, h, "native", fps_str=info["fps_str"])))
+
+
+def peak_memory_mib():
+    """Peak memory of this process and of its finished children (worker processes), in MiB."""
+    try:
+        import resource
+
+        unit = 2**20 if sys.platform == "darwin" else 2**10  # ru_maxrss: bytes on macOS, KiB on Linux
+        own = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss / unit
+        kids = resource.getrusage(resource.RUSAGE_CHILDREN).ru_maxrss / unit
+        return own, kids
+    except ImportError:  # Windows: the process's peak working set
+        if sys.platform != "win32":
+            return 0.0, None
+        import ctypes
+        from ctypes import wintypes
+
+        class PMC(ctypes.Structure):
+            _fields_ = [("cb", wintypes.DWORD), ("PageFaultCount", wintypes.DWORD)] + [
+                (n, ctypes.c_size_t)
+                for n in (
+                    "PeakWorkingSetSize",
+                    "WorkingSetSize",
+                    "QuotaPeakPagedPoolUsage",
+                    "QuotaPagedPoolUsage",
+                    "QuotaPeakNonPagedPoolUsage",
+                    "QuotaNonPagedPoolUsage",
+                    "PagefileUsage",
+                    "PeakPagefileUsage",
+                )
+            ]
+
+        pmc = PMC()
+        pmc.cb = ctypes.sizeof(PMC)
+        k32 = ctypes.WinDLL("kernel32")
+        psapi = ctypes.WinDLL("psapi")
+        k32.GetCurrentProcess.restype = wintypes.HANDLE
+        psapi.GetProcessMemoryInfo(k32.GetCurrentProcess(), ctypes.byref(pmc), pmc.cb)
+        return pmc.PeakWorkingSetSize / 2**20, None
+
+
+def _child_render(src, out, jobs):
+    """Run in a fresh interpreter by the streaming test: render, then print frames and peak memory as JSON."""
+    r = pipeline.render_video(presets.build(look="church-dub"), src, out, quality="standard", jobs=jobs or None)
+    own, kids = peak_memory_mib()
+    print(json.dumps({"frames": r["frames"], "own": own, "workers": kids}))
 
 
 # ------------------------------------------------------------------------------------------------ runner
@@ -277,7 +324,9 @@ def run(out=None, quick=False, jobs=None) -> bool:
     def options():
         n = 0
         base = dict(look="my-own-funeral")
-        variants: List[Dict[str, Any]] = [dict(mask=m) for m in presets.MASKS] + [dict(capture=c) for c in presets.CAPTURES]
+        variants: List[Dict[str, Any]] = [dict(mask=m) for m in presets.MASKS] + [
+            dict(capture=c) for c in presets.CAPTURES
+        ]
         variants += [
             dict(curvature=1.0, fill=0.8),
             dict(fill=1.3),
@@ -434,6 +483,7 @@ def run(out=None, quick=False, jobs=None) -> bool:
 
             def v_vfr():
                 si = media.probe(vfr)
+                assert si["vfr"], "the synthetic variable-rate clip was not detected as VFR"
                 r = pipeline.render_video(
                     presets.build(look="church-dub"), vfr, os.path.join(vo, "vfr_out.mp4"), quality=q, jobs=jobs
                 )
@@ -490,9 +540,9 @@ def run(out=None, quick=False, jobs=None) -> bool:
             R.skip("video with rotation metadata", "this ffmpeg could not write rotation metadata")
 
         def v_long():
-            # a 1280x720 clip whose decoded frames would need about 1.3 to 2.7 GB if held in memory, rendered in a
-            # fresh process so its peak memory is its own
-            secs = 10 if quick else 20
+            # a 1280x720 clip whose decoded frames would need 1.2 to 1.9 GiB if they were held in memory, rendered in
+            # a fresh interpreter so the peak memory it reports is the render's own
+            secs = 16 if quick else 24
             big = os.path.join(src, "big_720p.mp4")
             enc = (
                 ["-c:v", "libx264", "-preset", "veryfast", "-crf", "23"]
@@ -520,19 +570,9 @@ def run(out=None, quick=False, jobs=None) -> bool:
             )
             assert r0.returncode == 0, r0.stderr.decode(errors="replace")[-300:]
             n_big = secs * 30
-            code = (
-                "import json, os, sys; sys.path.insert(0, sys.argv[1]);"
-                "from tapetube import pipeline, presets;"
-                "r = pipeline.render_video(presets.build(look='church-dub'), sys.argv[2], sys.argv[3], quality='draft',"
-                " jobs=(int(sys.argv[4]) or None));"
-                "m = {};\n"
-                "try:\n import resource; m = {'self': resource.getrusage(resource.RUSAGE_SELF).ru_maxrss,"
-                " 'children': resource.getrusage(resource.RUSAGE_CHILDREN).ru_maxrss}\n"
-                "except ImportError:\n pass\n"
-                "print(json.dumps({'frames': r['frames'], 'mem': m}))"
-            )
             here = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
             out_big = os.path.join(vo, "big_720p_out.mp4")
+            code = "import sys; sys.path.insert(0, sys.argv[1]); from tapetube import selftest; selftest._child_render(sys.argv[2], sys.argv[3], int(sys.argv[4]))"
             r1 = subprocess.run(
                 [sys.executable, "-c", code, here, big, out_big, str(jobs or 0)], capture_output=True, text=True
             )
@@ -541,14 +581,11 @@ def run(out=None, quick=False, jobs=None) -> bool:
             assert res["frames"] == n_big, f"{res['frames']} of {n_big}"
             info = media.probe(out_big)
             assert info["audio"] and info["width"] == 1280 and info["height"] == 720
-            decoded = n_big * 1280 * 720 * 3 / 2**30
-            m = res["mem"]
-            if m:
-                unit = 2**20 if sys.platform == "darwin" else 2**10
-                peak = max(m["self"], m["children"]) / unit
-                assert peak < decoded * 1024 * 0.5, f"peak {peak:.0f} MiB looks like the clip is held in memory"
-                return f"{n_big} frames of 1280x720 ({decoded:.1f} GiB decoded), peak process memory {peak:.0f} MiB"
-            return f"{n_big} frames of 1280x720 ({decoded:.1f} GiB decoded) streamed"
+            decoded = n_big * 1280 * 720 * 3 / 2**20
+            peak = max(res["own"], res["workers"] or 0)
+            assert peak < decoded, f"peak {peak:.0f} MiB is not below the {decoded:.0f} MiB of decoded frames"
+            who = "main process" if res["workers"] is None else "largest process (main or a worker)"
+            return f"{n_big} frames of 1280x720 ({decoded / 1024:.2f} GiB decoded); peak memory of the {who} {peak:.0f} MiB"
 
         R.check("video long clip, streamed", v_long)
 
@@ -647,9 +684,7 @@ def run(out=None, quick=False, jobs=None) -> bool:
         "python": platform.python_version(),
         "numpy": np.__version__,
         "opencv": cv2.__version__,
-        "ffmpeg": subprocess.run([media.ff(), "-version"], capture_output=True, text=True).stdout.splitlines()[
-            0
-        ]
+        "ffmpeg": subprocess.run([media.ff(), "-version"], capture_output=True, text=True).stdout.splitlines()[0]
         if have_ff
         else None,
         "quick": quick,

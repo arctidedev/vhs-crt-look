@@ -172,6 +172,7 @@ def test_tube_render_sizes(size):
     rgb, a = crt.render(
         sig, cfg["crt"], cfg["tube"], cfg["camera"], w, h, alpha=alpha, grain_rng=np.random.default_rng(0)
     )
+    assert a is not None
     assert rgb.shape == (h, w, 3) and a.shape == (h, w)
     assert np.isfinite(rgb).all() and rgb.min() >= 0 and rgb.max() <= 1
 

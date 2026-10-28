@@ -166,6 +166,38 @@ def _frac(s) -> Optional[Fraction]:
         return None
 
 
+def _packet_timing(path: str):
+    """(variable frame rate?, median frame rate) from the first 240 video packets' timestamps. Container headers
+    often report a nominal rate for a variable-rate file, so the timestamps are the only reliable test."""
+    try:
+        j = _run_json(
+            [
+                fp(),
+                "-v",
+                "error",
+                "-select_streams",
+                "v:0",
+                "-read_intervals",
+                "%+#240",
+                "-show_entries",
+                "packet=pts_time",
+                "-of",
+                "json",
+                path,
+            ]
+        )
+    except (MediaError, ValueError):
+        return False, None
+    pts = sorted(float(p["pts_time"]) for p in j.get("packets", []) if p.get("pts_time") not in (None, "N/A"))
+    d = np.diff(np.array(pts, np.float64))
+    d = d[d > 1e-6]
+    if len(d) < 8:
+        return False, None
+    med = float(np.median(d))
+    spread = float(np.percentile(d, 95) - np.percentile(d, 5))
+    return spread > 0.1 * med, 1.0 / med
+
+
 def probe(path: str) -> dict:
     """Video facts: display size (rotation and pixel aspect applied), frame rates, VFR, duration, audio, alpha."""
     need_ffmpeg()
@@ -200,6 +232,10 @@ def probe(path: str) -> dict:
     if fps > 240:  # bogus timebase-derived rates
         fps = rr if rr and rr <= 240 else Fraction(30)
     vfr = bool(avg and rr and abs(float(avg) - float(rr)) / float(rr) > 0.01)
+    pkt_vfr, _ = _packet_timing(path)
+    vfr = vfr or pkt_vfr
+    if vfr and rr and float(rr) <= 120:  # constant output at the nominal (fastest) rate keeps every distinct frame
+        fps = rr
     dur = None
     for src in (v.get("duration"), j.get("format", {}).get("duration")):
         try:
@@ -378,7 +414,7 @@ class VideoWriter:
             self.inp.write(np.ascontiguousarray(rgb_u8).tobytes())
         except OSError:  # ffmpeg stopped (BrokenPipeError on POSIX, EINVAL on Windows): report its own message
             self.close()
-            raise MediaError("ffmpeg stopped accepting frames")
+            raise MediaError("ffmpeg stopped accepting frames") from None
         self.n += 1
 
     def close(self):
