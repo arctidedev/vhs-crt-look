@@ -477,7 +477,7 @@ def cmd_rewind(a):
 def cmd_selftest(a):
     from tapetube import selftest
 
-    ok = selftest.run(a.out, quick=a.quick, jobs=a.jobs)
+    ok = selftest.run(a.out, quick=a.quick, jobs=a.jobs, only=a.only)
     sys.exit(0 if ok else 1)
 
 
@@ -576,6 +576,7 @@ def main(argv=None):
     p.add_argument("--out", help="folder for the test outputs (default: a temporary folder)")
     p.add_argument("--quick", action="store_true", help="fewer frames and smaller sizes")
     p.add_argument("--jobs", type=int)
+    p.add_argument("--only", help="run only the checks whose name contains this text, e.g. 'video'")
     p.set_defaults(fn=cmd_selftest)
 
     a = ap.parse_args(argv)

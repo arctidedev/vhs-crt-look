@@ -150,6 +150,8 @@ def peak_memory_mib():
         k32 = ctypes.WinDLL("kernel32")
         psapi = ctypes.WinDLL("psapi")
         k32.GetCurrentProcess.restype = wintypes.HANDLE
+        psapi.GetProcessMemoryInfo.argtypes = [wintypes.HANDLE, ctypes.POINTER(PMC), wintypes.DWORD]
+        psapi.GetProcessMemoryInfo.restype = wintypes.BOOL
         psapi.GetProcessMemoryInfo(k32.GetCurrentProcess(), ctypes.byref(pmc), pmc.cb)
         return pmc.PeakWorkingSetSize / 2**20, None
 
@@ -163,10 +165,13 @@ def _child_render(src, out, jobs):
 
 # ------------------------------------------------------------------------------------------------ runner
 class Runner:
-    def __init__(self):
+    def __init__(self, only=None):
         self.rows = []
+        self.only = only.lower() if only else None
 
     def check(self, name, fn):
+        if self.only and self.only not in name.lower():
+            return
         t = time.time()
         try:
             detail = fn()
@@ -201,11 +206,11 @@ def assert_img(path, w=None, h=None, channels=None, dtype: Any = np.uint8):
     return a
 
 
-def run(out=None, quick=False, jobs=None) -> bool:
+def run(out=None, quick=False, jobs=None, only=None) -> bool:
     out = os.path.abspath(out or tempfile.mkdtemp(prefix="vhslook_selftest_"))
     src = os.path.join(out, "media")
     os.makedirs(src, exist_ok=True)
-    R = Runner()
+    R = Runner(only)
     print(
         f"vhslook selftest ({'quick' if quick else 'full'}) on {platform.system()} {platform.machine()}, Python "
         f"{platform.python_version()}, numpy {np.__version__}, OpenCV {cv2.__version__}"
