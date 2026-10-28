@@ -222,7 +222,7 @@ def tube_labels(cfg: dict) -> Dict[str, str]:
 
 
 def stage_names(cfg: dict, keys) -> Dict[str, tuple]:
-    """(short OSD name, step counter) per stage id. Counters follow the breakdown's n/5 style; the film's OSD font
+    """(short OSD name, step counter) per stage id. Counters use an n/5 style; the OSD font
     draws S and 5 the same, so stage ids never appear in OSD lettering."""
     mask = {"slot": "Slot mask", "grille": "Aperture grille", "dot": "Dot triads"}[cfg["crt"]["mask"]]
     short = {

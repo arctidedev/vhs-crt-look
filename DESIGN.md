@@ -4,7 +4,7 @@ The only UI in this project is the offline comparison page the CLI writes (`vhs-
 
 ## Intent
 
-A place to judge a look on your own frame. The image is the hero; the chrome stays quiet and out of the way. Identity comes from the film itself, not from decoration.
+A place to judge a look on your own frame. The image is the hero; the chrome stays quiet and out of the way. Identity comes from the camcorder's own lettering, not from decoration.
 
 ## Tokens (CSS custom properties in page.py)
 

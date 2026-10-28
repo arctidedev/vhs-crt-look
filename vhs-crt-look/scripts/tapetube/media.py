@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import functools
 import json
 import os
 import shutil
@@ -12,6 +13,8 @@ from typing import Iterator, Optional, Tuple
 
 import cv2
 import numpy as np
+
+from . import ffbin
 
 IMAGE_EXT = {".png", ".jpg", ".jpeg", ".tif", ".tiff", ".bmp", ".webp", ".exr", ".jp2", ".pgm", ".ppm"}
 VIDEO_EXT = {
@@ -37,14 +40,14 @@ class MediaError(RuntimeError):
     pass
 
 
+@functools.cache
 def ffmpeg_bin() -> Optional[str]:
-    return os.environ.get("VHSLOOK_FFMPEG") or shutil.which("ffmpeg")
+    return ffbin.find("ffmpeg")
 
 
+@functools.cache
 def ffprobe_bin() -> Optional[str]:
-    if os.environ.get("VHSLOOK_FFPROBE"):
-        return os.environ["VHSLOOK_FFPROBE"]
-    p = shutil.which("ffprobe")
+    p = ffbin.find("ffprobe")
     if p:
         return p
     f = ffmpeg_bin()
@@ -68,9 +71,10 @@ def fp() -> str:
 def need_ffmpeg():
     if not ffmpeg_bin() or not ffprobe_bin():
         raise MediaError(
-            "ffmpeg and ffprobe are needed for video. Install: macOS 'brew install ffmpeg'; Windows 'winget install "
-            "Gyan.FFmpeg'; Debian/Ubuntu 'sudo apt install ffmpeg'; conda 'conda install -c conda-forge ffmpeg'. "
-            "Or point VHSLOOK_FFMPEG / VHSLOOK_FFPROBE at the binaries. Images work without it."
+            "ffmpeg is needed for video (images work without it). Run: python vhslook.py setup  (it offers to install "
+            "ffmpeg), or "
+            + ffbin.manual_hint()
+            + ". You can also point VHSLOOK_FFMPEG / VHSLOOK_FFPROBE at the binaries."
         )
 
 

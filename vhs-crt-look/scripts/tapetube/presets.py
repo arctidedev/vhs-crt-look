@@ -185,7 +185,7 @@ def apply_set(cfg: dict, key: str, raw: str):
 
 def build(
     data: Optional[dict] = None,
-    look: Optional[str] = "my-own-funeral",
+    look: Optional[str] = "vhs-on-tv",
     tape: Optional[str] = None,
     tube: Optional[str] = None,
     treatment: Optional[str] = None,

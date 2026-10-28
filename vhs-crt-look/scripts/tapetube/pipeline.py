@@ -16,7 +16,7 @@ import numpy as np
 
 from . import crt, media, vhs
 
-# standard renders the tube at the output size; high renders it at 2x and downsamples (as the film did). draft and
+# standard renders the tube at the output size; high renders it at 2x and downsamples (as the reference renders did). draft and
 # final are accepted as aliases.
 QUALITY_SS = {"standard": 1, "draft": 1, "high": 2, "final": 2}
 

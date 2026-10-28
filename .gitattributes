@@ -34,3 +34,5 @@ pdm.lock                merge=ours
 *.so                    binary
 *.dylib                 binary
 # <<< arctide-auto-resolver END <<<
+*.bat text eol=crlf
+*.cmd text eol=crlf

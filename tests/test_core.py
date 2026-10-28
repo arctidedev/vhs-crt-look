@@ -43,13 +43,13 @@ def test_gauss1d_matches_scipy_when_available():
     assert np.abs(sigproc.gauss2d(a, 0.8, 3.1) - nd.gaussian_filter(a, (0.8, 3.1, 0))).max() < 1e-5
 
 
-def test_tvl_sigma_is_the_films():
+def test_tvl_sigma_matches_reference():
     # looktest: f = tvl * 4/3 / 2 / 960 cycles per sample, sigma = 0.3416 / f
     assert math.isclose(vhs.tvl_sigma(240), 0.3416 / (240 * 4 / 3 / 2 / 960), rel_tol=1e-9)
     assert vhs.tvl_sigma(0) == 0.0
 
 
-def test_film_constants():
+def test_reference_constants():
     d = presets.load()
     v2 = presets._merge(d["base_vhs"], d["vhs"]["V2"])
     assert v2["luma_tvl"] == [240, 225] and v2["chroma_tvl"] == [36, 32] and v2["gens"] == 2
@@ -58,8 +58,8 @@ def test_film_constants():
     assert c2["mask"] == "slot" and c2["triads_across"] == 640 and c2["overscan"] == 1.07
     t6 = d["treatments"]["T6"]
     assert t6["tube"]["fieldOnly"] == 1 and t6["crt"]["beam_max"] == 0.3
-    assert d["looks"]["my-own-funeral"] == {
-        **d["looks"]["my-own-funeral"],
+    assert d["looks"]["vhs-on-tv"] == {
+        **d["looks"]["vhs-on-tv"],
         "tape": "V2",
         "tube": "C2",
         "treatment": "T6",
@@ -115,8 +115,8 @@ def test_date_stamp_fits(w):
     assert y0 >= 0 and y0 + 7 * cell <= 720
 
 
-def test_film_stamp_placement():
-    # prep_tape.py: x0 = round(960 - 84 * 1.5 + 6 - 11 * 36), y0 = round(720 - 70 * 1.5 - 42)
+def test_reference_stamp_placement():
+    # reference placement: x0 = round(960 - 84 * 1.5 + 6 - 11 * 36), y0 = round(720 - 70 * 1.5 - 42)
     assert osd.stamp_layout(960, 720, "OCT 26 1987") == (6, 444, 573)
 
 
@@ -164,7 +164,7 @@ def test_mask_mean_is_one(kind):
 
 @pytest.mark.parametrize("size", [(333, 601), (640, 480), (1000, 300), (65, 49)])
 def test_tube_render_sizes(size):
-    cfg = presets.build(look="my-own-funeral")
+    cfg = presets.build(look="vhs-on-tv")
     w, h = size
     cw = vhs.raster_width(w / h)
     sig = vhs.vhs_signal(frames(cw, 720), cfg["vhs"], 0, 24.0)
@@ -227,3 +227,41 @@ def test_selftest_quick(tmp_path):
     from tapetube import selftest
 
     assert selftest.run(str(tmp_path / "st"), quick=True)
+
+
+def test_ffbin_env_override_and_install_hint(tmp_path, monkeypatch):
+    from tapetube import ffbin
+
+    fake = tmp_path / ("ffmpeg.exe" if os.name == "nt" else "ffmpeg")
+    fake.write_text("")
+    monkeypatch.setenv("VHSLOOK_FFMPEG", str(fake))
+    assert ffbin.find("ffmpeg") == str(fake)
+    cmd = ffbin.install_command()
+    assert cmd is None or (isinstance(cmd, list) and "ffmpeg" in " ".join(cmd).lower())
+    assert "ffmpeg" in ffbin.manual_hint().lower()
+
+
+def test_setup_ffmpeg_step_decisions(monkeypatch, capsys):
+    import setup_env
+
+    monkeypatch.setattr(setup_env.ffbin, "find", lambda name: None)
+    assert setup_env.ffmpeg_step(yes=False, skip=True) is True  # stills only
+    monkeypatch.setattr(setup_env.ffbin, "install_command", lambda: None)
+    assert setup_env.ffmpeg_step(yes=True, skip=False) is False  # nothing to install with: manual hint
+    monkeypatch.setattr(setup_env.ffbin, "install_command", lambda: [sys.executable, "-c", "pass"])
+    assert setup_env.ffmpeg_step(yes=False, skip=False) is False  # not interactive and no --yes: never installs
+    assert "Not installed" in capsys.readouterr().out
+    assert setup_env.ffmpeg_step(yes=True, skip=False) is False  # ran the installer, ffmpeg still not visible
+
+
+def test_cli_without_packages_points_to_setup(tmp_path):
+    """A python without numpy and OpenCV gets one clear instruction instead of a traceback."""
+    skill = os.path.dirname(SCRIPTS)
+    out = subprocess.run(
+        [sys.executable, "-I", "-S", os.path.join(SCRIPTS, "vhslook.py"), "doctor"],
+        capture_output=True,
+        text=True,
+        env={"PATH": os.environ.get("PATH", ""), "VHSLOOK_NO_VENV": "1"},
+        cwd=skill,
+    )
+    assert out.returncode != 0 and "setup" in (out.stdout + out.stderr)

@@ -1,5 +1,5 @@
 {
- "_doc": "Every parameter of the look, under the names the film used (looktest.py BASE_VHS / VHS / BASE_CRT / CRT, comp/look.json tube / camera / finish / treatments). A look = a tape preset (V*), optionally a tube preset (C*) and a tube treatment (T*), and a capture mode: direct (the tape into a capture card), screen (the CRT face captured cleanly) or filmed (a camera filming the CRT). Units: TVL = TV lines per picture height at 10 % MTF; samples = 1/720 of the picture height along a line (960 per line on a 4:3 picture); lines = 1/480 of the picture height; triad units = one phosphor triad pitch.",
+ "_doc": "Every parameter of the look, under the names of the reference implementation (base_vhs / vhs / base_crt / crt, tube / camera / treatments). A look = a tape preset (V*), optionally a tube preset (C*) and a tube treatment (T*), and a capture mode: direct (the tape into a capture card), screen (the CRT face captured cleanly) or filmed (a camera filming the CRT). Units: TVL = TV lines per picture height at 10 % MTF; samples = 1/720 of the picture height along a line (960 per line on a 4:3 picture); lines = 1/480 of the picture height; triad units = one phosphor triad pitch.",
  "base_vhs": {
   "cam_soft": 0.8,
   "wb": [1.03, 1.0, 0.92],
@@ -54,7 +54,7 @@
   "V2": {
    "name": "SP second-generation dub (tape-ministry copy)",
    "title": "Second-generation SP dub",
-   "desc": "The master dubbed deck to deck at SP: bandwidth lost twice, noise twice, double halos, chroma delay accumulates, colour weaker. The tape in My Own Funeral.",
+   "desc": "The master dubbed deck to deck at SP: bandwidth lost twice, noise twice, double halos, chroma delay accumulates, colour weaker.",
    "gens": 2,
    "luma_tvl": [240, 225],
    "chroma_tvl": [36, 32],
@@ -212,7 +212,7 @@
   "C2": {
    "name": "Slot mask (in-line gun), typical 2005 set",
    "title": "Slot mask, typical consumer set",
-   "desc": "What most consumer CRTs of the 1990s and 2000s used: vertical R, G, B slots in staggered columns with thin bridges, about 1.0 mm pitch, moderate beam bloom. The tube in My Own Funeral."
+   "desc": "What most consumer CRTs of the 1990s and 2000s used: vertical R, G, B slots in staggered columns with thin bridges, about 1.0 mm pitch, moderate beam bloom."
   },
   "C3": {
    "name": "Aperture grille (Trinitron) with damper wires",
@@ -253,7 +253,7 @@
   }
  },
  "tube": {
-  "_doc": "The tube's build and treatment (comp/look.json tube block and the shader defaults). fill = how much of the frame the raster spans (1 = edge to edge, rounded corners in frame; below 1 the bezel shows). curvature = 0 for a flat-face tube, up to 1 for a strongly curved older set.",
+  "_doc": "The tube's build and treatment (the reference tube settings and shader defaults). fill = how much of the frame the raster spans (1 = edge to edge, rounded corners in frame; below 1 the bezel shows). curvature = 0 for a flat-face tube, up to 1 for a strongly curved older set.",
   "cornerR": 0.035,
   "edgeSoft": 0.006,
   "glassBlack": [0.0035, 0.004, 0.0045],
@@ -284,7 +284,7 @@
   "bezel": [0.016, 0.0145, 0.013]
  },
  "camera": {
-  "_doc": "The filming camera (comp/look.json camera and finish blocks): exposure, lens bloom above a luminance knee, wide glare, and the film's camera-side grain (8-bit levels, uniform, per frame).",
+  "_doc": "The filming camera: exposure, lens bloom above a luminance knee, wide glare, and camera-side grain (8-bit levels, uniform, per frame).",
   "exposure": 1.0,
   "bloom": 0.07,
   "bloomKnee": [0.12, 0.5],
@@ -326,15 +326,15 @@
    "tube": {"roll": 0.12, "rollW": 0.22, "rollRate": 0.11, "maskRoll": 0.62}
   },
   "T6": {
-   "title": "The film's tube",
-   "desc": "One recorded field (240 lines), a little milky lift in the raster and a cool white, light smear, a very faint roll. The treatment in My Own Funeral.",
+   "title": "One field, cool white",
+   "desc": "One recorded field (240 lines), a little milky lift in the raster and a cool white, light smear, a very faint roll.",
    "tube": {"fieldOnly": 1, "scatter": 0.04, "tint": [0.96, 0.99, 1.05], "sat": 0.92, "contrast": 0.95, "smear": 0.08, "smearLen": 8, "roll": 0.06, "rollW": 0.25, "rollRate": 0.09, "maskRoll": 0.5, "picLift": [0.0045, 0.005, 0.0065]},
    "crt": {"beam_min": 0.16, "beam_max": 0.3}
   }
  },
  "looks": {
-  "my-own-funeral": {"title": "My Own Funeral", "desc": "The film's full chain: second-generation SP dub, slot-mask tube with the film's treatment, filmed off the TV.", "tape": "V2", "tube": "C2", "treatment": "T6", "capture": "filmed"},
-  "church-dub": {"title": "Dubbed church tape", "desc": "The film's tape on its own: a second-generation SP dub, captured straight from the deck.", "tape": "V2", "capture": "direct"},
+  "vhs-on-tv": {"title": "VHS on a TV, filmed", "desc": "The full chain: a second-generation SP dub on a slot-mask TV, filmed with a camera that records one field, with a cool white and a faint roll.", "tape": "V2", "tube": "C2", "treatment": "T6", "capture": "filmed"},
+  "church-dub": {"title": "Dubbed church tape", "desc": "A second-generation SP dub, captured straight from the deck.", "tape": "V2", "capture": "direct"},
   "home-camcorder": {"title": "Home camcorder tape", "desc": "A camcorder original on SP, played on a home VCR and captured straight from the deck.", "tape": "V1", "capture": "direct"},
   "clean-deck": {"title": "Clean deck", "desc": "The cleanest tape that still reads as VHS: format bandwidth and chroma delay, almost no noise.", "tape": "V6", "capture": "direct"},
   "ep-longplay": {"title": "EP long-play copy", "desc": "A six-hour EP dub: soft, noisy, dull colour, more dropouts.", "tape": "V3", "capture": "direct"},

@@ -1,6 +1,6 @@
 # vhs-crt-look
 
-A free Claude skill and command-line tool that applies the 1987 camcorder, VHS tape and CRT TV look from the short film **My Own Funeral** to anyone's images and videos. Plain Python 3.9+ with numpy and OpenCV, ffmpeg for video. No GPU, browser or network.
+A free Claude skill and command-line tool that applies a 1987 camcorder, VHS tape and CRT TV look to anyone's images and videos. Plain Python 3.9+ with numpy and OpenCV, ffmpeg for video. No GPU, browser or network.
 
 The skill itself is the [`vhs-crt-look/`](vhs-crt-look) folder: [`SKILL.md`](vhs-crt-look/SKILL.md) (what Claude follows), [`README.md`](vhs-crt-look/README.md) (for people), `scripts/` (the CLI and the `tapetube` package), `presets/looks.json` (every parameter), `LICENSE` (MIT).
 
@@ -14,7 +14,7 @@ vhs-crt-look/                 the skill package (copy this folder to share or in
   scripts/page-template.html  the offline comparison page
   scripts/tapetube/           sigproc, osd, vhs (tape chain), crt (tube), presets, media, pipeline, preview, page, rewind, selftest
 tests/                        pytest suite
-tools/fidelity_check.py       compares the tape chain with the film's own looktest.py (needs the film project and SciPy)
+tools/fidelity_check.py       compares the tape chain with the reference looktest.py (needs that project and SciPy)
 tools/package_skill.py        builds dist/vhs-crt-look-skill.zip
 install.py                    installs the skill into ~/.claude/skills (or a project)
 ```
@@ -32,7 +32,7 @@ python -m venv .venv && .venv/bin/python -m pip install -r vhs-crt-look/requirem
 
 ## Fidelity
 
-`tools/fidelity_check.py <film project>` feeds identical frames to this tape chain and to the film's `looktest.py`. With seed 0 the final tape signal matches to within 6e-6 of full scale on all seven tape presets V1 to V7 (an 8-bit step is 3.9e-3). The tube is a numpy port of the film's three.js face shader (`comp/index_bd2.html`, look.json crt, tube and camera blocks).
+`tools/fidelity_check.py <reference project>` feeds identical frames to this tape chain and to the reference `looktest.py`. With seed 0 the final tape signal matches to within 6e-6 of full scale on all seven tape presets V1 to V7 (an 8-bit step is 3.9e-3). The tube is a numpy port of the reference three.js face shader with the same parameters.
 
 ## Quality gates
 
